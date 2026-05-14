@@ -1,0 +1,19 @@
+{
+    "Test Account 1": {
+        "accountName": "Test Account 1",
+        "password": "Test Password",
+        "profiles": [
+            {
+                "decks": [
+                    {
+                        "cards": [],
+                        "cardsIncSub": [],
+                        "deckName": "Default Deck",
+                        "level": 0
+                    }
+                ],
+                "profileName": "Default Profile"
+            }
+        ]
+    }
+}
