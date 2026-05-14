@@ -6,6 +6,11 @@
 
 using namespace std;
 
+// Sample change
+// As you can see, there is a green line near the line number on the left side of this comment
+// That would signify new lines of code that was not present in the previous version of this branch
+// Red arrow would point to where you need to click when you want to save/send your current progress, usually when you're done with a feature or you want to get it checked
+
 char getChoice() {
     char choice;
     cout << ": ";
