@@ -6,11 +6,25 @@
 
 using namespace std;
 
-// Sample change
-// As you can see, there is a green line near the line number on the left side of this comment
-// That would signify new lines of code that was not present in the previous version of this branch
-// Red arrow would point to where you need to click when you want to save/send your current progress, usually when you're done with a feature or you want to get it checked
-
+/*
+    getChoice Function:
+        Handles user input in decisions like:
+            [1] Login
+            [2] Sign Up
+            [0] Exit
+        Will also automatically print the colon space
+        Returns a character since a decision like this might show up later:
+            [1] Deck 6
+            [2] Deck 7
+            [3] Deck 8
+            [4] Deck 9
+            [5] Deck 10
+            [<] Previous Page
+            [>] Next Page
+            [8] Create Deck
+            [9] Settings
+            [0] Back
+*/
 char getChoice() {
     char choice;
     cout << ": ";
@@ -22,6 +36,13 @@ char getChoice() {
     return choice;
 }
 
+/*
+    saveToFile Function:
+        Handles saving the user data into the json file
+        Takes only one parameter:  
+            Reference to the instance of an accounts class
+        Since our data structure nests the cards, decks, and profiles all under the accounts, triggering the class to json conversion on the account class would subsequently trigger the class to json conversions of the profile, deck, and card classes.
+*/
 void saveToFile(const std::unordered_map<string, Account> &accounts) {
     json j = accounts;
     ofstream outputFile("data.json");
@@ -29,6 +50,11 @@ void saveToFile(const std::unordered_map<string, Account> &accounts) {
     outputFile.close();
 }
 
+/*
+    loadFromFile Function:
+        Handles the extraction of data from the json file into an unordered map of account classes usable in C++ code
+        It returns the onrodered map itself
+*/
 unordered_map<string, Account> loadFromFile() {
     ifstream file("data.json");
     if(!file.is_open()) return {};
@@ -37,6 +63,17 @@ unordered_map<string, Account> loadFromFile() {
     return j.get<unordered_map<string, Account>>();   
 }
 
+/*
+    enum AppState Class:
+        This contains the names of our so-called "pages" in our command line user interface
+        Keep in mind when adding a "page":
+            All caps, replace spaces with underscore
+            Try to keep the EXIT at the bottom of the list for easier readability
+        Below this enum class are the functions that handle each page, next set of comments would help explain
+
+        As of 05/16/2026, not all pages have been added
+
+*/
 enum class AppState {
     MAIN_MENU,
     LOGIN,
@@ -49,6 +86,25 @@ enum class AppState {
     
     EXIT
 };
+
+/*
+    AppState Handle Functions:
+        Below are and would be the handle functions of each AppState
+        These would contain the user interactions such as the text seen in the command line and the user input
+            Ex: MAIN_MENU
+                ===== ANKI IN C++ =====
+                [1] Login
+                [2] Sign Up
+                [0] Exit
+                : 
+            Ex: LOGIN
+                === LOGIN ===
+                Enter Username: [user input here]
+                Enter Password: [user input here]
+        Naming convention: Lower Camel Case
+        First line of the function should always be, this clears the command line before printing:
+            std::cout << "\033[2J\033[1;1H";
+*/
 
 AppState handleMainMenu() {
     std::cout << "\033[2J\033[1;1H";
