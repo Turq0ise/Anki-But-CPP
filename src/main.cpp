@@ -102,6 +102,7 @@ enum class AppState {
                 === LOGIN ===
                 Enter Username: [user input here]
                 Enter Password: [user input here]
+        These functions return an AppState to indicate what "page" should be displayed to the user next. More on this on the comments on the main function
         Naming convention: Lower Camel Case
         First line of the function should always be, this clears the command line before printing:
             std::cout << "\033[2J\033[1;1H";
@@ -224,17 +225,23 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
     activeProfile = &activeUser->profiles[(choiceToInt - 1) + (profilePage * limitPerPage)];
     return AppState::PROFILE_DASHBOARD;
 }
-
 // AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, int* &pProfilePage, Profile* &activeProfile) {
 
 // }
 
+/*
+    main Function:
+        This is the function that gets called as soon as the program starts.
+*/
 int main() {
     unordered_map<string, Account> allAccounts = loadFromFile();
     Account* activeUser = nullptr;
     Profile* activeProfile = nullptr;
     int profilePage = 0;
 
+    /*
+        The code below connects the AppStates to their respective handle Functions
+    */
     AppState currentState = AppState::MAIN_MENU;
     while(currentState != AppState::EXIT) {
         switch(currentState) {
@@ -254,78 +261,6 @@ int main() {
                 break;
         }
     }
-
-    // json j_class = sampleAccount;
-    // cout << j_class.dump(4);
-
-    // ofstream output_file("data.json");
-    // output_file << j_class.dump(4);
-    // output_file.close();
-
-    // Account current;
-    // cout << "Welcome to Anki!\n";
-    // while(true) {
-    //     cout << "[1] Login\n[2] Sign Up\n[0] Exit\n: ";
-    //     int choice;
-    //     cin >> choice;
-    //     if (choice == 0) {
-    //         break;
-    //     } else if (choice == 1) {
-    //         cout << "No Accounts Found";
-    //     } else if (choice == 2) {
-    //         while (true) {
-    //             string username, password, confirm;
-    //             cout <<  "Username: ";
-    //             cin >> username;
-    //             cout << "Password: ";
-    //             cin >> password;
-    //             cout << "Are you sure about this Username and Password? [y/n]: ";
-    //             cin >> confirm;
-    //             if (confirm == "y") {
-    //                 current.accountName = username;
-    //                 current.password = password;
-
-    //                 json j_class = current;
-
-    //                 ofstream output_file("data.json");
-    //                 output_file << j_class.dump(4);
-    //                 output_file.close();
-
-    //                 break;
-    //             }
-    //         }
-    //     } else {
-    //         cout << "Invalid Option";
-    //     }
-    // }
-
-    // Account sampleAccount("Sample Account", "Sample Password");
-    
-    // Profile sampleProfileOne("Profile One");
-    // Profile sampleProfileTwo("Profile Two");
-    // Profile sampleProfileThree("Profile Three");
-
-    // Deck sampleDeckOne("Deck One", 0);
-    // Deck sampleDeckTwo("Deck Two", 0);
-    // Deck sampleDeckThree("Deck Three", 0);
-
-    // Card sampleCardOne("Question One", "Answer One");
-    // Card sampleCardTwo("Question Two", "Answer Two");
-    // Card sampleCardThree("Question Three", "Answer Three");
-    // Card sampleCardFour("Question Four", "Answer Four");
-    // Card sampleCardFive("Question Five", "Answer Five");
-    // Card sampleCardSix("Question Six", "Answer Six");
-    // Card sampleCardSeven("Question Seven", "Answer Seven");
-
-    // sampleDeckOne.cards = {sampleCardOne, sampleCardTwo};
-    // sampleDeckTwo.cards = {sampleCardThree, sampleCardFour, sampleCardFive};
-    // sampleDeckThree.cards = {sampleCardOne, sampleCardTwo, sampleCardFour, sampleCardSix, sampleCardSeven};
-
-    // sampleProfileOne.decks = {sampleDeckOne, sampleDeckTwo, sampleDeckThree};
-    // sampleProfileTwo.decks = {sampleDeckTwo};
-    // sampleProfileThree.decks = {sampleDeckOne, sampleDeckThree};
-
-    // sampleAccount.profiles = {sampleProfileOne, sampleProfileTwo, sampleProfileThree};
 
     return 0;
 }   
