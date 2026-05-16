@@ -80,6 +80,7 @@ enum class AppState {
     SIGNUP,
     PROFILES,
     CREATE_PROFILE,
+    ACCOUNT_SETTINGS,
     PROFILE_DASHBOARD,
     CREATE_DECK,
     DECK_DASHBOARD,
@@ -142,6 +143,7 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
         return AppState::LOGIN;
     }
 
+    activeUser = &allAccounts[username];
     return AppState::PROFILES;
 }
 
@@ -175,25 +177,80 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
     return AppState::SIGNUP;
 }
 
-// AppState handleExit() {
-    // progress saving could also happen here'
+AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &activeUser, int &profilePage, Profile* &activeProfile) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== PROFILES ===\n";
+    cout << "= Page " << profilePage << " =\n";
+    int limitPerPage = 5;
+    int profilesVectorSize = activeUser->profiles.size();
+    int runningSize = (profilesVectorSize <= limitPerPage) ? profilesVectorSize : ((profilePage + 1) * limitPerPage) - ((profilesVectorSize / limitPerPage) >= (profilePage + 1) ? 0 : limitPerPage - (profilesVectorSize % limitPerPage));
+    for(int i = (5 * profilePage); i < runningSize; i++) {
+        int index = (i + 1) - (profilePage * limitPerPage);
+        cout << "[" << index << "]: " << activeUser->profiles[i].profileName << "\n";
+    }
+    cout << "\n";
+    int numberOfPages = (profilesVectorSize / limitPerPage) + ( (profilesVectorSize % limitPerPage) > 0 ? 1 : 0);
+    if(numberOfPages > 1) {
+        if(profilePage == 0) {
+            cout << "[>] Next Page";
+        } else if(profilePage > 0 && profilePage < (numberOfPages - 1)) {
+            cout << "[<] Previous Page  |  Next Page [>]";
+        } else if(profilePage == (numberOfPages - 1)) {
+            cout << "[<] Previous Page";
+        } 
+        cout << "\n";
+    }
+    cout << "[8] Create Profile\n[9] Account Settings\n[0] Back/Sign Out\n";
+
+    char choice = getChoice();
+    if(choice == '0') {
+        return AppState::MAIN_MENU;
+    } else if(choice == '9') {
+        return AppState::ACCOUNT_SETTINGS;
+    } else if(choice == '8') {
+        return AppState::CREATE_PROFILE;
+    } else if(choice == '<' && numberOfPages > 1 && ((profilePage > 0 && profilePage < (numberOfPages - 1)) || (profilePage == (numberOfPages - 1)))) {
+        profilePage = profilePage - 1;
+        return AppState::PROFILES;
+    } else if(choice == '>' && numberOfPages > 1 && ((profilePage > 0 && profilePage < (numberOfPages - 1)) || (profilePage == 0))) {
+        profilePage = profilePage + 1;
+        return AppState::PROFILES;
+    }
+
+    if(choice != '1' && choice != '2' && choice != '3' && choice != '4' && choice != '5') {
+        return AppState::PROFILES;
+    }
+    int choiceToInt = choice - '0';
+    activeProfile = &activeUser->profiles[(choiceToInt - 1) + (profilePage * limitPerPage)];
+    return AppState::PROFILE_DASHBOARD;
+}
+
+// AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, int* &pProfilePage, Profile* &activeProfile) {
+
 // }
 
 int main() {
     unordered_map<string, Account> allAccounts = loadFromFile();
     Account* activeUser = nullptr;
+    Profile* activeProfile = nullptr;
+    int profilePage = 0;
 
     AppState currentState = AppState::MAIN_MENU;
     while(currentState != AppState::EXIT) {
         switch(currentState) {
             case AppState::MAIN_MENU:
                 currentState = handleMainMenu();
+                activeUser = nullptr;
+                activeProfile = nullptr;
                 break;
             case AppState::LOGIN:
                 currentState = handleLogin(allAccounts, activeUser);
                 break;
             case AppState::SIGNUP:
                 currentState = handleSignup(allAccounts, activeUser);
+                break;
+            case AppState::PROFILES:
+                currentState = handleProfiles(allAccounts, activeUser, profilePage, activeProfile);
                 break;
         }
     }
