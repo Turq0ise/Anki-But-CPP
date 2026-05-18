@@ -286,6 +286,12 @@ int main() {
             case AppState::PROFILES:
                 currentState = handleProfiles(allAccounts, activeUser, profilePage, activeProfile);
                 break;
+            // case AppState::BACKUPS:  //TO BE FIXED
+                //currentState = handleBackups();
+                //break;
+            // case AppState::STATISTICS: //TO BE FIXED
+                //currentState = handleStatistics(activeProfile);
+                //break;
         }
     }
 
