@@ -84,7 +84,9 @@ enum class AppState {
     PROFILE_DASHBOARD,
     CREATE_DECK,
     DECK_DASHBOARD,
-    
+    BACKUPS,
+    STATISTICS,
+
     EXIT
 };
 
@@ -228,6 +230,17 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
 // AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, int* &pProfilePage, Profile* &activeProfile) {
 
 // }
+
+// FSRS Math Function -> For difficulty
+double getNewDifficulty(double currentDiff, int rating) {
+    double nextDiff = currentDiff;
+    if (rating == 1) nextDiff = nextDiff + 2.0; // harder
+    if (rating == 4) nextDiff = nextDiff - 2.0; // easier
+
+    if (nextDiff < 1.0) return 1.0;
+    if (nextDiff > 10.0) return 10.0;
+    return nextDiff;
+}
 
 /*
     main Function:
