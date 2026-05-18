@@ -82,6 +82,7 @@ enum class AppState {
     CREATE_PROFILE,
     ACCOUNT_SETTINGS,
     PROFILE_DASHBOARD,
+    SETTINGS,
     CREATE_DECK,
     DECK_DASHBOARD,
     
@@ -167,8 +168,7 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
     cout << "Are you sure about this Username and Password? [Y/n]: ";
     cin >> confirm;
     if(confirm == 'Y') {
-        Account newAcc(username, password);
-        allAccounts[username] = newAcc;
+        allAccounts[username] = Account(username, password);
         saveToFile(allAccounts);
         activeUser = &allAccounts[username];
         
@@ -181,15 +181,18 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
 AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &activeUser, int &profilePage, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== PROFILES ===\n";
-    cout << "= Page " << profilePage << " =\n";
-    int limitPerPage = 5;
+    cout << "= Page " << profilePage + 1 << " =\n";
+
+    const int limitPerPage = 5;
     int profilesVectorSize = activeUser->profiles.size();
     int runningSize = (profilesVectorSize <= limitPerPage) ? profilesVectorSize : ((profilePage + 1) * limitPerPage) - ((profilesVectorSize / limitPerPage) >= (profilePage + 1) ? 0 : limitPerPage - (profilesVectorSize % limitPerPage));
     for(int i = (5 * profilePage); i < runningSize; i++) {
         int index = (i + 1) - (profilePage * limitPerPage);
         cout << "[" << index << "]: " << activeUser->profiles[i].profileName << "\n";
     }
+
     cout << "\n";
+
     int numberOfPages = (profilesVectorSize / limitPerPage) + ( (profilesVectorSize % limitPerPage) > 0 ? 1 : 0);
     if(numberOfPages > 1) {
         if(profilePage == 0) {
@@ -225,9 +228,98 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
     activeProfile = &activeUser->profiles[(choiceToInt - 1) + (profilePage * limitPerPage)];
     return AppState::PROFILE_DASHBOARD;
 }
-// AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, int* &pProfilePage, Profile* &activeProfile) {
 
-// }
+AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== CREATE PROFILE ===\n";
+    string profileName;
+    cout << "Enter Profile Name: ";
+    getline(cin >> ws, profileName);
+
+    bool profileExists = true;
+    while (profileExists) {
+        profileExists = false;
+
+        for(const Profile &profile : activeUser->profiles) {
+            if(profileName == profile.profileName) {
+                profileExists = true;
+                std::cout << "\033[2J\033[1;1H";
+                cout << "=== CREATE PROFILE ===\n";
+                cout << "Profile Already Exists, Please Try Again!\n";
+                cout << "Enter Profile Name: ";
+                getline(cin >> ws, profileName);
+                break;
+            }
+        }
+    }
+
+    activeUser->profiles.push_back(Profile(profileName));
+    saveToFile(allAccounts);
+    cout << "Profile made Successfully!\n";
+    cout << "[1] Proceed to " << profileName << "\n[2] Create another Profile\n";
+    char choice = getChoice();
+    while((choice != '1') && (choice != '2')) {
+        cout << "Invalid Input, Please Try Again!\n";
+        cout << "[1] Proceed to " << profileName << "\n[2] Create another Profile\n";
+        choice = getChoice();
+    }
+    if(choice == '1') {
+        activeProfile = &activeUser->profiles[activeUser->profiles.size() - 1];
+        return AppState::PROFILE_DASHBOARD;
+    } else if(choice == '2') {
+        return AppState::CREATE_PROFILE;
+    }
+}
+
+AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &selectedDeck) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== PROFILE DASHBOARD: " << activeProfile->profileName << " ===\n\n";
+
+    const int limitPerPage = 5;
+    int decksVectorSize = activeProfile->decks.size();
+    int runningSize = (decksVectorSize<= limitPerPage) ? decksVectorSize : ((deckPage + 1) * limitPerPage) - ((decksVectorSize/ limitPerPage) >= (deckPage + 1) ? 0 : limitPerPage - (decksVectorSize% limitPerPage));
+    for(int i = (5 * deckPage); i < runningSize; i++) {
+        int index = (i + 1) - (deckPage * limitPerPage);
+        cout << "[" << index << "]: " << activeProfile->decks[i].deckName << "\n";
+    }
+
+    cout << "\n";
+
+    int numberOfPages = (decksVectorSize / limitPerPage) + ( (decksVectorSize % limitPerPage) > 0 ? 1 : 0);
+    if(numberOfPages > 1) {
+        if(deckPage == 0) {
+            cout << "[>] Next Page";
+        } else if(deckPage > 0 && deckPage< (numberOfPages - 1)) {
+            cout << "[<] Previous Page  |  Next Page [>]";
+        } else if(deckPage== (numberOfPages - 1)) {
+            cout << "[<] Previous Page";
+        } 
+        cout << "\n";
+    }
+    cout << "[8] Create Deck\n[9] Settings\n[0] Back\n";
+
+    char choice = getChoice();
+    if(choice == '0') {
+        return AppState::PROFILES;
+    } else if(choice == '9') {
+        return AppState::SETTINGS;
+    } else if(choice == '8') {
+        return AppState::CREATE_DECK;
+    } else if(choice == '<' && numberOfPages > 1 && ((deckPage > 0 && deckPage < (numberOfPages - 1)) || (deckPage == (numberOfPages - 1)))) {
+        deckPage = deckPage - 1;
+        return AppState::DECK_DASHBOARD;
+    } else if(choice == '>' && numberOfPages > 1 && ((deckPage > 0 && deckPage < (numberOfPages - 1)) || (deckPage == 0))) {
+        deckPage = deckPage + 1;
+        return AppState::DECK_DASHBOARD;
+    }
+
+    if(choice != '1' && choice != '2' && choice != '3' && choice != '4' && choice != '5') {
+        return AppState::DECK_DASHBOARD;
+    }
+    int choiceToInt = choice - '0';
+    selectedDeck = &activeProfile->decks[(choiceToInt - 1) + (deckPage * limitPerPage)];
+    return AppState::PROFILE_DASHBOARD;
+}
 
 /*
     main Function:
@@ -237,7 +329,9 @@ int main() {
     unordered_map<string, Account> allAccounts = loadFromFile();
     Account* activeUser = nullptr;
     Profile* activeProfile = nullptr;
+    Deck* selectedDeck = nullptr;
     int profilePage = 0;
+    int deckPage = 0;
 
     /*
         The code below connects the AppStates to their respective handle Functions
@@ -258,6 +352,12 @@ int main() {
                 break;
             case AppState::PROFILES:
                 currentState = handleProfiles(allAccounts, activeUser, profilePage, activeProfile);
+                break;
+            case AppState::CREATE_PROFILE:
+                currentState = handleCreateProfile(allAccounts, activeUser, activeProfile);
+                break;
+            case AppState::PROFILE_DASHBOARD:
+                currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, selectedDeck);
                 break;
         }
     }
