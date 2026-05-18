@@ -242,6 +242,20 @@ double getNewDifficulty(double currentDiff, int rating) {
     return nextDiff;
 }
 
+double getNewStability(double currentStab, int rating) {
+    if (rating == 1) {
+        return currentStab / 2.0; //stability is half if user fogret
+    } else {
+        return currentStab + rating; //add rating to stab if remembered
+    }
+}
+
+int getNewInterval(double stability) {
+    int days = stability * 2
+    if (days < 1) return 1;
+    return days;
+}
+
 /*
     main Function:
         This is the function that gets called as soon as the program starts.
