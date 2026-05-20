@@ -81,6 +81,9 @@ enum class AppState {
     PROFILES,
     CREATE_PROFILE,
     ACCOUNT_SETTINGS,
+        CHANGE_ACCOUNT_NAME,
+        CHANGE_ACCOUNT_PASSWORD,
+        DELETE_ACCOUNT,
     PROFILE_DASHBOARD,
     SETTINGS,
     CREATE_DECK,
@@ -134,14 +137,14 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin.get();
+        // cin.get();
         return AppState::LOGIN;
     }
     if(allAccounts[username].password != password) {
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin.get();
+        // cin.get();
         return AppState::LOGIN;
     }
 
@@ -321,6 +324,79 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
     return AppState::PROFILE_DASHBOARD;
 }
 
+AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== PROFILE DASHBOARD: " << activeUser->accountName << " ===\n\n";
+    cout << "[1] Change Account Name\n[2] Change Password\n[3] Delete Account\n[0] Back\n";
+
+    char choice = getChoice();
+    if(choice == '1') return AppState::CHANGE_ACCOUNT_NAME;
+    if(choice == '2') return AppState::CHANGE_ACCOUNT_PASSWORD;
+    if(choice == '3') return AppState::DELETE_ACCOUNT;
+    if(choice == '0') return AppState::PROFILE_DASHBOARD;
+
+    return AppState::ACCOUNT_SETTINGS;
+}
+
+AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== CHANGE ACCOUNT NAME ===\n";
+    cout << "= Current Account Name: " << activeUser->accountName << "\n";
+    cout << "Enter New Username: ";
+    string oldUsername = activeUser->accountName;
+    string newUsername, password;
+    getline(cin >> ws, newUsername);
+    while(allAccounts.find(newUsername) != allAccounts.end()) {
+        std::cout << "\033[2J\033[1;1H";
+        cout << "=== CHANGE ACCOUNT NAME ===\n";
+        cout << "= Current Account Name: " << activeUser->accountName << "\n";
+        cout << "Enter New Username: ";
+        getline(cin >> ws, newUsername);
+    }
+    cout << "Enter Password: ";
+    getline(cin >> ws, password);
+    while(activeUser->password != password) {
+        cout << "Incorrect Password, Please Try Again!\n";
+        cout << "Enter Password: ";
+        getline(cin >> ws, password);
+    }
+
+    activeUser->accountName = newUsername;
+    allAccounts[newUsername] = allAccounts[oldUsername];
+    allAccounts.erase(oldUsername);
+    saveToFile(allAccounts);
+    activeUser = &allAccounts[newUsername];
+    return AppState::PROFILES;
+}
+
+AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
+
+}
+
+AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== DELETE ACCOUNT ===\n";
+    cout << "= Current Account: " << activeUser->accountName << "\n\n";
+    char confirm;
+    cout << "Are you sure you want to delete your account? [Y/n]: ";
+    cin >> confirm;
+    if(confirm == 'Y') {
+        string confirmString;
+        cout << "\nPlease type your username enclosed in square brackets to confirm account deletion: \n";
+        getline(cin >> ws, confirmString);
+        if(confirmString == ("[" + activeUser->accountName + "]")) {
+            allAccounts.erase(activeUser->accountName);
+            saveToFile(allAccounts);
+            activeUser = nullptr;
+            std::cout << "\033[2J\033[1;1H";
+            cout << "Account Deletion Successful\nEnter any key to go back...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            // cin.get();
+            return AppState::MAIN_MENU;
+        }
+    } else if(confirm == 'n') return AppState::ACCOUNT_SETTINGS;
+}
+
 /*
     main Function:
         This is the function that gets called as soon as the program starts.
@@ -358,6 +434,18 @@ int main() {
                 break;
             case AppState::PROFILE_DASHBOARD:
                 currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, selectedDeck);
+                break;
+            case AppState::ACCOUNT_SETTINGS:
+                currentState = handleAccountSettings(allAccounts, activeUser);
+                break;
+            case AppState::CHANGE_ACCOUNT_NAME:
+                currentState = handleChangeAccountName(allAccounts, activeUser);
+                break;
+            case AppState::CHANGE_ACCOUNT_PASSWORD:
+                currentState = handleChangeAccountPassword(allAccounts, activeUser);
+                break;
+            case AppState::DELETE_ACCOUNT:
+                currentState = handleDeleteAccount(allAccounts, activeUser);
                 break;
         }
     }
