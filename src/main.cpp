@@ -93,8 +93,11 @@ enum class AppState {
     DECK_DASHBOARD,
     DECK_SETTINGS,
     
+    BACK,
     EXIT
 };
+
+vector<AppState> breadcrumbs;
 
 /*
     AppState Handle Functions:
@@ -127,6 +130,11 @@ AppState handleMainMenu() {
     if(choice == '0') return AppState::EXIT;
 
     return AppState::MAIN_MENU;
+}
+
+AppState handleBack(vector<AppState> &breadcrumbs) {
+    breadcrumbs.pop_back();
+    return breadcrumbs.back();
 }
 
 AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &activeUser) {
@@ -215,7 +223,7 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
 
     char choice = getChoice();
     if(choice == '0') {
-        return AppState::MAIN_MENU;
+        return AppState::BACK;
     } else if(choice == '9') {
         return AppState::ACCOUNT_SETTINGS;
     } else if(choice == '8') {
@@ -278,7 +286,7 @@ AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account
     }
 }
 
-AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &selectedDeck, AppState &previousState) {
+AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &selectedDeck) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== PROFILE DASHBOARD: " << activeProfile->profileName << " ===\n\n";
 
@@ -308,9 +316,9 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
     
     char choice = getChoice();
     if(choice == '0') {
-        return AppState::PROFILES;
+        return AppState::BACK;
     } else if(choice == '9') {
-        previousState = AppState::PROFILE_DASHBOARD;
+        // previousState = AppState::PROFILE_DASHBOARD;
         return AppState::SETTINGS;
     } else if(choice == '8') {
         return AppState::CREATE_DECK;
@@ -339,7 +347,7 @@ AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Accou
     if(choice == '1') return AppState::CHANGE_ACCOUNT_NAME;
     if(choice == '2') return AppState::CHANGE_ACCOUNT_PASSWORD;
     if(choice == '3') return AppState::DELETE_ACCOUNT;
-    if(choice == '0') return AppState::PROFILE_DASHBOARD;
+    if(choice == '0') return AppState::BACK;
 
     return AppState::ACCOUNT_SETTINGS;
 }
@@ -436,25 +444,28 @@ AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account
     } else if(confirm == 'n') return AppState::ACCOUNT_SETTINGS;
 }
 
-AppState handleSettings(AppState &previousState) {
+AppState handleSettings(vector<AppState> &breadcrumbs) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== SETTINGS ===\n\n";
+    
+    int count = 1;
+    if(breadcrumbs.rbegin()[1] == AppState::ACCOUNT_SETTINGS || breadcrumbs.rbegin()[1] == AppState::PROFILE_SETTINGS) count = 2;
 
-    if(previousState == AppState::PROFILE_DASHBOARD) {
+    if(breadcrumbs.rbegin()[count] == AppState::PROFILE_DASHBOARD) {
         cout << "[1] Profile Settings\n[2] Account Settings\n[0] Back\n";
         char choice;
         choice = getChoice();
         if(choice == '1') return AppState::PROFILE_SETTINGS;
         else if(choice == '2') return AppState::ACCOUNT_SETTINGS;
-        else if(choice == '0') return AppState::PROFILE_DASHBOARD;
-    } else if(previousState == AppState::DECK_DASHBOARD) {
+        else if(choice == '0') return AppState::BACK;
+    } else if(breadcrumbs.rbegin()[count] == AppState::DECK_DASHBOARD) {
         cout << "[1] Deck Settings\n[2] Profile Settings\n[3] Account Settings\n[0] Back\n";
         char choice;
         choice = getChoice();
         if(choice == '1') return AppState::DECK_SETTINGS;
         else if(choice == '2') return AppState::PROFILE_SETTINGS;
         else if(choice == '3') return AppState::ACCOUNT_SETTINGS;
-        else if(choice == '0') return AppState::DECK_DASHBOARD;
+        else if(choice == '0') return AppState::BACK;
     }
 }
 
@@ -482,11 +493,24 @@ int main() {
     */
     AppState currentState = AppState::MAIN_MENU;
     while(currentState != AppState::EXIT) {
+        if( currentState != AppState::BACK &&
+            currentState != AppState::SIGNUP &&
+            currentState != AppState::CHANGE_ACCOUNT_NAME &&
+            currentState != AppState::CHANGE_ACCOUNT_PASSWORD &&
+            currentState != AppState::DELETE_ACCOUNT &&
+            currentState != AppState::CREATE_PROFILE &&
+            currentState != AppState::CHANGE_PROFILE_NAME &&
+            currentState != AppState::DELETE_PROFILE &&
+            currentState != AppState::CREATE_DECK)
+            breadcrumbs.push_back(currentState);
         switch(currentState) {
             case AppState::MAIN_MENU:
                 currentState = handleMainMenu();
                 activeUser = nullptr;
                 activeProfile = nullptr;
+                break;
+            case AppState::BACK:
+                currentState = handleBack(breadcrumbs);
                 break;
             case AppState::LOGIN:
                 currentState = handleLogin(allAccounts, activeUser);
@@ -501,7 +525,7 @@ int main() {
                 currentState = handleCreateProfile(allAccounts, activeUser, activeProfile);
                 break;
             case AppState::PROFILE_DASHBOARD:
-                currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, selectedDeck, previousState);
+                currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, selectedDeck);
                 break;
             case AppState::ACCOUNT_SETTINGS:
                 currentState = handleAccountSettings(allAccounts, activeUser);
@@ -516,7 +540,7 @@ int main() {
                 currentState = handleDeleteAccount(allAccounts, activeUser);
                 break;
             case AppState::SETTINGS:
-                currentState = handleSettings(previousState);
+                currentState = handleSettings(breadcrumbs);
                 break;
             case AppState::PROFILE_SETTINGS:
                 currentState = handleProfileSettings(allAccounts, activeUser, activeProfile);
