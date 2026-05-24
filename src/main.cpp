@@ -132,7 +132,14 @@ AppState handleMainMenu() {
     return AppState::MAIN_MENU;
 }
 
-AppState handleBack(vector<AppState> &breadcrumbs) {
+AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser) {
+    if(activeUser == nullptr) {
+        breadcrumbs.clear();
+        breadcrumbs.push_back(AppState::MAIN_MENU);
+        return breadcrumbs.back();
+    }
+
+    if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
     breadcrumbs.pop_back();
     return breadcrumbs.back();
 }
@@ -149,14 +156,12 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        // cin.get();
         return AppState::LOGIN;
     }
     if(allAccounts[username].password != password) {
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        // cin.get();
         return AppState::LOGIN;
     }
 
@@ -223,6 +228,7 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
 
     char choice = getChoice();
     if(choice == '0') {
+        activeUser = nullptr;
         return AppState::BACK;
     } else if(choice == '9') {
         return AppState::ACCOUNT_SETTINGS;
@@ -284,6 +290,8 @@ AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account
     } else if(choice == '2') {
         return AppState::CREATE_PROFILE;
     }
+
+    return AppState::CREATE_PROFILE;
 }
 
 AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &selectedDeck) {
@@ -311,16 +319,19 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
         } 
         cout << "\n";
     }
-    cout << "[8] Create Deck\n[9] Settings\n[0] Back\n";
+    cout << "[7] Create Deck\n[8] Settings\n[9] Back\n[0] Sign Out";
 
     
     char choice = getChoice();
     if(choice == '0') {
+        activeUser = nullptr;
         return AppState::BACK;
-    } else if(choice == '9') {
+    } else if(choice == '9') { 
+        return AppState::BACK;
+    } else if(choice == '8') {
         // previousState = AppState::PROFILE_DASHBOARD;
         return AppState::SETTINGS;
-    } else if(choice == '8') {
+    } else if(choice == '7') {
         return AppState::CREATE_DECK;
     } else if(choice == '<' && numberOfPages > 1 && ((deckPage > 0 && deckPage < (numberOfPages - 1)) || (deckPage == (numberOfPages - 1)))) {
         deckPage = deckPage - 1;
@@ -355,15 +366,15 @@ AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Accou
 AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== CHANGE ACCOUNT NAME ===\n";
-    cout << "= Current Account Name: " << activeUser->accountName << "\n";
-    cout << "Enter New Username: ";
     string oldUsername = activeUser->accountName;
+    cout << "= Current Account Name: " << oldUsername << "\n";
+    cout << "Enter New Username: ";
     string newUsername, password;
     getline(cin >> ws, newUsername);
     while(allAccounts.find(newUsername) != allAccounts.end()) {
         std::cout << "\033[2J\033[1;1H";
         cout << "=== CHANGE ACCOUNT NAME ===\n";
-        cout << "= Current Account Name: " << activeUser->accountName << "\n";
+        cout << "Account Name: " << newUsername << " Already Exists, Please Try Again!\n";
         cout << "Enter New Username: ";
         getline(cin >> ws, newUsername);
     }
@@ -380,7 +391,7 @@ AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Acc
     allAccounts.erase(oldUsername);
     saveToFile(allAccounts);
     activeUser = &allAccounts[newUsername];
-    return AppState::PROFILES;
+    return AppState::ACCOUNT_SETTINGS;
 }
 
 AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
@@ -438,27 +449,27 @@ AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account
             std::cout << "\033[2J\033[1;1H";
             cout << "Account Deletion Successful\nEnter any key to go back...";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            // cin.get();
-            return AppState::MAIN_MENU;
+            return AppState::BACK;
         }
     } else if(confirm == 'n') return AppState::ACCOUNT_SETTINGS;
+
+    return AppState::DELETE_ACCOUNT;
 }
 
 AppState handleSettings(vector<AppState> &breadcrumbs) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== SETTINGS ===\n\n";
-    
-    int count = 1;
-    if(breadcrumbs.rbegin()[1] == AppState::ACCOUNT_SETTINGS || breadcrumbs.rbegin()[1] == AppState::PROFILE_SETTINGS) count = 2;
 
-    if(breadcrumbs.rbegin()[count] == AppState::PROFILE_DASHBOARD) {
+    if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
+
+    if(breadcrumbs.rbegin()[1] == AppState::PROFILE_DASHBOARD) {
         cout << "[1] Profile Settings\n[2] Account Settings\n[0] Back\n";
         char choice;
         choice = getChoice();
         if(choice == '1') return AppState::PROFILE_SETTINGS;
         else if(choice == '2') return AppState::ACCOUNT_SETTINGS;
         else if(choice == '0') return AppState::BACK;
-    } else if(breadcrumbs.rbegin()[count] == AppState::DECK_DASHBOARD) {
+    } else if(breadcrumbs.rbegin()[1] == AppState::DECK_DASHBOARD) {
         cout << "[1] Deck Settings\n[2] Profile Settings\n[3] Account Settings\n[0] Back\n";
         char choice;
         choice = getChoice();
@@ -467,12 +478,88 @@ AppState handleSettings(vector<AppState> &breadcrumbs) {
         else if(choice == '3') return AppState::ACCOUNT_SETTINGS;
         else if(choice == '0') return AppState::BACK;
     }
+
+    return AppState::SETTINGS;
 }
 
 AppState handleProfileSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== PROFILE SETTINGS: " << activeProfile->profileName << " ===\n\n";
     cout << "[1] Change Profile Name\n[2] Delete Profile\n[0] Back\n";
+
+    char choice = getChoice();
+    if(choice == '1') return AppState::CHANGE_PROFILE_NAME;
+    if(choice == '2') return AppState::DELETE_PROFILE;
+    if(choice == '0') return AppState::BACK;
+
+    return AppState::PROFILE_SETTINGS;
+}
+
+AppState handleChangeProfileName(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== CHANGE PROFILE NAME ===\n";
+    string oldProfileName = activeProfile->profileName;
+    cout << "= Current Profile Name: " << oldProfileName << "\n";
+    cout << "Enter New Profile Name: ";
+    string newProfileName, password;
+    bool profileNameExists = true;
+    getline(cin >> ws, newProfileName);
+    while(profileNameExists == true) {
+        for(int i = 0; i < activeUser->profiles.size(); i++) {
+            if(newProfileName == activeUser->profiles[i].profileName) {
+                std::cout << "\033[2J\033[1;1H";
+                cout << "=== CHANGE PROFILE NAME ===\n";
+                cout << "Profile Name: " << oldProfileName << " Already Exists, Please Try Again!\n";
+                cout << "Enter New Profile Name: ";
+                getline(cin >> ws, newProfileName);
+                break;
+            }
+        }
+        profileNameExists = false;
+    }
+    cout << "Enter Password: ";
+    getline(cin >> ws, password);
+    while(activeUser->password != password) {
+        cout << "Incorrect Password, Please Try Again!\n";
+        cout << "Enter Password: ";
+        getline(cin >> ws, password);
+    }
+
+    activeProfile->profileName = newProfileName;
+    allAccounts[activeUser->accountName].profiles = activeUser->profiles;
+    saveToFile(allAccounts);
+    return AppState::BACK;
+}
+
+AppState handleDeleteProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
+    std::cout << "\033[2J\033[1;1H";
+    cout << "=== DELETE PROFILE ===\n";
+    cout << "= Current Profile: " << activeProfile->profileName << "\n\n";
+    char confirm;
+    cout << "Are you sure you want to delete this profile? [Y/n]: ";
+    cin >> confirm;
+    if(confirm == 'Y') {
+        string confirmString;
+        cout << "\nPlease type your profile name enclosed in square brackets to confirm account deletion: \n";
+        getline(cin >> ws, confirmString);
+        if(confirmString == ("[" + activeProfile->profileName + "]")) {
+            int index = 0;
+            while(index < activeUser->profiles.size()) {
+                if(activeUser->profiles[index].profileName == activeProfile->profileName) break;
+                index++;
+            }
+            activeUser->profiles.erase(activeUser->profiles.begin() + index);
+            allAccounts[activeUser->accountName].profiles = activeUser->profiles;
+            saveToFile(allAccounts);
+            activeProfile = nullptr;
+            std::cout << "\033[2J\033[1;1H";
+            cout << "Profile Deletion Successful\nEnter any key to go back...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return AppState::PROFILES;
+        }
+    } else if(confirm == 'n') return AppState::PROFILE_SETTINGS;
+
+    return AppState::DELETE_PROFILE;
 }
 
 /*
@@ -486,13 +573,20 @@ int main() {
     Deck* selectedDeck = nullptr;
     int profilePage = 0;
     int deckPage = 0;
-    AppState previousState;
 
     /*
         The code below connects the AppStates to their respective handle Functions
     */
     AppState currentState = AppState::MAIN_MENU;
     while(currentState != AppState::EXIT) {
+        if(activeUser == nullptr) {
+            profilePage = 0;
+            deckPage = 0;
+        }
+        if(activeProfile == nullptr) {
+            deckPage = 0;
+        }
+
         if( currentState != AppState::BACK &&
             currentState != AppState::SIGNUP &&
             currentState != AppState::CHANGE_ACCOUNT_NAME &&
@@ -503,6 +597,7 @@ int main() {
             currentState != AppState::DELETE_PROFILE &&
             currentState != AppState::CREATE_DECK)
             breadcrumbs.push_back(currentState);
+
         switch(currentState) {
             case AppState::MAIN_MENU:
                 currentState = handleMainMenu();
@@ -510,7 +605,7 @@ int main() {
                 activeProfile = nullptr;
                 break;
             case AppState::BACK:
-                currentState = handleBack(breadcrumbs);
+                currentState = handleBack(breadcrumbs, activeUser);
                 break;
             case AppState::LOGIN:
                 currentState = handleLogin(allAccounts, activeUser);
@@ -544,6 +639,12 @@ int main() {
                 break;
             case AppState::PROFILE_SETTINGS:
                 currentState = handleProfileSettings(allAccounts, activeUser, activeProfile);
+                break;
+            case AppState::CHANGE_PROFILE_NAME:
+                currentState = handleChangeProfileName(allAccounts, activeUser, activeProfile);
+                break;
+            case AppState::DELETE_PROFILE:
+                currentState = handleDeleteProfile(allAccounts, activeUser, activeProfile);
                 break;
         }
     }

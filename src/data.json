@@ -1,6 +1,6 @@
 {
-    "Test Account 1": {
-        "accountName": "Test Account 1",
+    "Test Account": {
+        "accountName": "Test Account",
         "password": "Password",
         "profiles": [
             {
@@ -98,18 +98,6 @@
                     }
                 ],
                 "profileName": "Last Test"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Lastest Test"
             }
         ]
     }
