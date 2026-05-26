@@ -91,6 +91,7 @@ enum class AppState {
         DELETE_PROFILE,
     CREATE_DECK,
     DECK_DASHBOARD,
+    CARD_MANAGEMENT,
     DECK_SETTINGS,
     
     BACK,
@@ -198,6 +199,130 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
     return AppState::SIGNUP;
 }
 
+// Allan's Card Feature Testing Screen
+AppState handleCardManagement() {
+    int choice = -1;
+    
+    // Local testing variables (Simulating a Deck)
+    // TODO for Team: Connect these to activeUser->profiles[0].decks[0].cards
+    vector<string> testFronts;
+    vector<string> testBacks;
+    vector<int> testTypes;
+
+    while (choice != 0) {
+        std::cout << "\033[2J\033[1;1H"; 
+        cout << "===========================================\n";
+        cout << "  MANAGING CARDS PANEL (TEST MODE)\n";
+        cout << "===========================================\n";
+        cout << "[1] Create (Add Card & Tag Type)\n";
+        cout << "[2] Read (View Existing Cards)\n";
+        cout << "[3] Update (Edit Card Data)\n";
+        cout << "[4] Delete (Remove Card)\n";
+        cout << "[0] Exit back to Dashboard\n";
+        cout << "Choice: ";
+        
+        if (!(cin >> choice)) {
+            cout << "Please enter a valid number.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        // --- CREATE ---
+        if (choice == 1) {
+            std::cout << "\033[2J\033[1;1H";
+            cout << "--- SELECT CARD TYPE ---\n";
+            cout << "[0] Basic (Standard)\n";
+            cout << "[1] Basic (and reversed card)\n";
+            cout << "[2] Basic (type in the answer)\n";
+            cout << "Choice: ";
+            int typeChoice;
+            if (!(cin >> typeChoice) || typeChoice < 0 || typeChoice > 2) typeChoice = 0;
+            
+            string front, back;
+            cout << "\nEnter Front (Question/Prompt): ";
+            getline(cin >> ws, front);
+            cout << "Enter Back (Answer/Definition): ";
+            getline(cin, back);
+
+            // Storing locally for now
+            testFronts.push_back(front);
+            testBacks.push_back(back);
+            testTypes.push_back(typeChoice);
+
+            // TODO for Team: Call saveToFile() here when integrating JSON
+            cout << "\nSuccess: Card added locally! Press Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+        // --- READ ---
+        else if (choice == 2) {
+            std::cout << "\033[2J\033[1;1H";
+            cout << "--- CURRENT DECK CARDS ---\n";
+            if (testFronts.empty()) {
+                cout << "[This deck is completely empty]\n";
+            } else {
+                for (size_t i = 0; i < testFronts.size(); ++i) {
+                    string typeLabel = (testTypes[i] == 1) ? "Basic (and reversed)" : 
+                                       (testTypes[i] == 2) ? "Basic (type-in answer)" : "Basic";
+                    cout << "[" << i + 1 << "] Type: " << typeLabel << "\n"
+                         << "    Front: " << testFronts[i] << "\n"
+                         << "    Back:  " << testBacks[i] << "\n"
+                         << "-------------------------------------------\n";
+                }
+            }
+            cout << "Press Enter to go back...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+        // --- UPDATE ---
+        else if (choice == 3) {
+            cout << "\nEnter Card Index Number to Edit: ";
+            int index;
+            if (cin >> index && index > 0 && index <= static_cast<int>(testFronts.size())) {
+                index--;
+                string newFront, newBack;
+                cout << "New Front (Leave empty + hit Enter to retain): ";
+                getline(cin >> ws, newFront);
+                cout << "New Back (Leave empty + hit Enter to retain): ";
+                getline(cin, newBack);
+
+                if (!newFront.empty()) testFronts[index] = newFront;
+                if (!newBack.empty()) testBacks[index] = newBack;
+                
+                cout << "Success: Card information updated locally!\n";
+            } else {
+                cout << "Invalid index selection!\n";
+            }
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Press Enter to continue...";
+            cin.get();
+        }
+        // --- DELETE ---
+        else if (choice == 4) {
+            cout << "\nEnter Card Index Number to Erase: ";
+            int index;
+            if (cin >> index && index > 0 && index <= static_cast<int>(testFronts.size())) {
+                index--;
+                testFronts.erase(testFronts.begin() + index);
+                testBacks.erase(testBacks.begin() + index);
+                testTypes.erase(testTypes.begin() + index);
+                cout << "Success: Card removed cleanly from local memory.\n";
+            } else {
+                cout << "Invalid selection!\n";
+            }
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Press Enter to continue...";
+            cin.get();
+        }
+    }
+    return AppState::MAIN_MENU; 
+}
+// AppState handleExit() {
+    // progress saving could also happen here'
+// }
 AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &activeUser, int &profilePage, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== PROFILES ===\n";
@@ -613,6 +738,9 @@ int main() {
             case AppState::SIGNUP:
                 currentState = handleSignup(allAccounts, activeUser);
                 break;
+            case AppState::DECK_DASHBOARD:
+                // Instantly jumps straight into your function to test it
+                currentState = handleCardManagement();
             case AppState::PROFILES:
                 currentState = handleProfiles(allAccounts, activeUser, profilePage, activeProfile);
                 break;
