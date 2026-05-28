@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
-#include "json.hpp"
+#include "json.hpp" // Do no touch this and the file itself
 
 using namespace std;
 using json = nlohmann::json;
@@ -18,11 +18,13 @@ class Card {
             front(front), back(back), type(type) {}
 };
 
+// Doesn't work yet, just a placeholder
 class ReversibleCard: public Card {
     public:
-        string test;
+    string test;
 };
 
+// Doesn't work yet, just a placeholder
 class InputCard: public Card {
     public:
         string test;
@@ -32,7 +34,9 @@ class Deck {
     public:
         string deckName;
         int level;
-        vector<Card> cards, cardsIncSub;
+        vector<Card> cards;
+        vector<Deck> subDecks;
+        vector<Card> cardsIncSub;
 
         Deck() = default;
         Deck(string deckName):
@@ -67,6 +71,11 @@ class Account {
             }
 };
 
+/*
+    The code below is responsible for the conversion of C++ Class to JSON Object and vice versa
+    Each class has their own corresponding adl_serializer struct containing a to_json and a from_json functions
+    Most important thing to understand here is understanding the attributes of the classes and their data types
+*/
 namespace nlohmann {
     template<>
     struct adl_serializer<Card> {
@@ -90,6 +99,7 @@ namespace nlohmann {
                 {"deckName", c.deckName},
                 {"level", c.level},
                 {"cards", c.cards},
+                {"subDecks", c.subDecks},
                 {"cardsIncSub", c.cardsIncSub}
             };
         } 
@@ -98,6 +108,7 @@ namespace nlohmann {
             c.deckName = j.at("deckName").get<string>();
             c.level = j.at("level").get<int>();
             c.cards = j.at("cards").get<vector<Card>>();
+            c.subDecks = j.at("subDecks").get<vector<Deck>>();
             c.cardsIncSub = j.at("cardsIncSub").get<vector<Card>>();
         }
     };
