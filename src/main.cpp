@@ -3,13 +3,11 @@
 #include <iomanip>
 #include <fstream>
 #include <functional>
+#include <limits>
+#include <vector>
+#include <unordered_map>
 
 using namespace std;
-
-// Sample change
-// As you can see, there is a green line near the line number on the left side of this comment
-// That would signify new lines of code that was not present in the previous version of this branch
-// Red arrow would point to where you need to click when you want to save/send your current progress, usually when you're done with a feature or you want to get it checked
 
 char getChoice() {
     char choice;
@@ -46,6 +44,7 @@ enum class AppState {
     PROFILE_DASHBOARD,
     CREATE_DECK,
     DECK_DASHBOARD,
+    CARD_MANAGEMENT,
     
     EXIT
 };
@@ -86,6 +85,7 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
         return AppState::LOGIN;
     }
 
+    activeUser = &allAccounts[username]; // Sets active session user pointer cleanly
     return AppState::PROFILES;
 }
 
@@ -119,9 +119,131 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
     return AppState::SIGNUP;
 }
 
-// AppState handleExit() {
-    // progress saving could also happen here'
-// }
+// =========================================================================
+// PRODUCTION CARD MANAGEMENT - TARGETING REAL LIVE STRUCTURE DATA POINTERS
+// =========================================================================
+AppState handleCardManagement(Deck* activeDeck, unordered_map<string, Account> &allAccounts) {
+    if (!activeDeck) {
+        cout << "Error: No active deck selected! Returning to Dashboard...\n";
+        cout << "Press Enter to continue...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        return AppState::DECK_DASHBOARD;
+    }
+
+    int choice = -1;
+    while (choice != 0) {
+        std::cout << "\033[2J\033[1;1H"; 
+        cout << "===========================================\n";
+        cout << "  MANAGING CARDS PANEL (" << activeDeck->deckName << ")\n";
+        cout << "===========================================\n";
+        cout << "[1] Create (Add Card & Tag Type Layout)\n";
+        cout << "[2] Read (View Existing Cards)\n";
+        cout << "[3] Update (Edit Card Content)\n";
+        cout << "[4] Delete (Remove Card From Deck Collection)\n";
+        cout << "[0] Exit back to Dashboard\n";
+        cout << "Choice: ";
+        
+        if (!(cin >> choice)) {
+            cout << "Please enter a valid number.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        // --- CREATE ---
+        if (choice == 1) {
+            std::cout << "\033[2J\033[1;1H";
+            cout << "--- SELECT CARD TYPE STYLE layout ---\n";
+            cout << "[0] Basic (Standard)\n";
+            cout << "[1] Basic (and reversed card variant)\n";
+            cout << "[2] Basic (type in the answer field layout)\n";
+            cout << "Choice: ";
+            int typeChoice;
+            if (!(cin >> typeChoice) || typeChoice < 0 || typeChoice > 2) typeChoice = 0;
+            
+            string front, back;
+            cout << "\nEnter Front (Question/Prompt): ";
+            getline(cin >> ws, front);
+            cout << "Enter Back (Answer/Definition): ";
+            getline(cin, back);
+
+            // Directly pushed to your database struct!
+            activeDeck->cards.push_back(Card(front, back, typeChoice));
+            saveToFile(allAccounts); // Instantly commits updates to data.json
+
+            cout << "\nSuccess: Card added and synchronized directly! Press Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+        // --- READ ---
+        else if (choice == 2) {
+            std::cout << "\033[2J\033[1;1H";
+            cout << "--- CURRENT ACTIVE CARDS IN DECK ---\n";
+            if (activeDeck->cards.empty()) {
+                cout << "[This deck is completely empty. Go add some cards!]\n";
+            } else {
+                for (size_t i = 0; i < activeDeck->cards.size(); ++i) {
+                    string typeLabel = (activeDeck->cards[i].type == 1) ? "Basic (and reversed)" : 
+                                       (activeDeck->cards[i].type == 2) ? "Basic (type-in answer)" : "Basic Standard";
+                    cout << "[" << i + 1 << "] Template Configuration: " << typeLabel << "\n"
+                         << "    Front Field: " << activeDeck->cards[i].front << "\n"
+                         << "    Back Field:  " << activeDeck->cards[i].back << "\n"
+                         << "-------------------------------------------\n";
+                }
+            }
+            cout << "Press Enter to go back to control screen...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+        // --- UPDATE ---
+        else if (choice == 3) {
+            cout << "\nEnter Card Index Number to Edit: ";
+            int index;
+            if (cin >> index && index > 0 && index <= static_cast<int>(activeDeck->cards.size())) {
+                index--;
+                string newFront, newBack;
+                cout << "New Front (Leave empty + hit Enter to retain original value): ";
+                getline(cin >> ws, newFront);
+                cout << "New Back (Leave empty + hit Enter to retain original value): ";
+                getline(cin, newBack);
+
+                if (!newFront.empty()) activeDeck->cards[index].front = newFront;
+                if (!newBack.empty()) activeDeck->cards[index].back = newBack;
+                
+                saveToFile(allAccounts); // Writes modifications straight to the JSON disk file
+                cout << "Success: Card information updated in storage!\n";
+            } else {
+                cout << "Invalid index selection bound context!\n";
+            }
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Press Enter to continue...";
+            cin.get();
+        }
+        // --- DELETE ---
+        else if (choice == 4) {
+            cout << "\nEnter Card Index Number to Erase: ";
+            int index;
+            if (cin >> index && index > 0 && index <= static_cast<int>(activeDeck->cards.size())) {
+                index--;
+                
+                // Safe lookup erase directly from the deck card vector vector matrix array track
+                activeDeck->cards.erase(activeDeck->cards.begin() + index);
+                saveToFile(allAccounts); // Drops updates safely down to backend file
+                
+                cout << "Success: Card removed cleanly from persistent system tracking layout memory.\n";
+            } else {
+                cout << "Invalid index bounds selection assignment!\n";
+            }
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Press Enter to continue...";
+            cin.get();
+        }
+    }
+    return AppState::DECK_DASHBOARD; 
+}
 
 int main() {
     unordered_map<string, Account> allAccounts = loadFromFile();
@@ -139,80 +261,23 @@ int main() {
             case AppState::SIGNUP:
                 currentState = handleSignup(allAccounts, activeUser);
                 break;
+            case AppState::DECK_DASHBOARD:
+                // Normal navigation handles moving the user down to CARD_MANAGEMENT state when invoked
+                break;
+            case AppState::CARD_MANAGEMENT: {
+                Deck* activeDeckPtr = nullptr;
+                if (activeUser && !activeUser->profiles.empty() && !activeUser->profiles[0].decks.empty()) {
+                    activeDeckPtr = &activeUser->profiles[0].decks[0]; 
+                }
+                
+                currentState = handleCardManagement(activeDeckPtr, allAccounts);
+                break;
+            }
+            default:
+                currentState = AppState::MAIN_MENU;
+                break;
         }
     }
 
-    // json j_class = sampleAccount;
-    // cout << j_class.dump(4);
-
-    // ofstream output_file("data.json");
-    // output_file << j_class.dump(4);
-    // output_file.close();
-
-    // Account current;
-    // cout << "Welcome to Anki!\n";
-    // while(true) {
-    //     cout << "[1] Login\n[2] Sign Up\n[0] Exit\n: ";
-    //     int choice;
-    //     cin >> choice;
-    //     if (choice == 0) {
-    //         break;
-    //     } else if (choice == 1) {
-    //         cout << "No Accounts Found";
-    //     } else if (choice == 2) {
-    //         while (true) {
-    //             string username, password, confirm;
-    //             cout <<  "Username: ";
-    //             cin >> username;
-    //             cout << "Password: ";
-    //             cin >> password;
-    //             cout << "Are you sure about this Username and Password? [y/n]: ";
-    //             cin >> confirm;
-    //             if (confirm == "y") {
-    //                 current.accountName = username;
-    //                 current.password = password;
-
-    //                 json j_class = current;
-
-    //                 ofstream output_file("data.json");
-    //                 output_file << j_class.dump(4);
-    //                 output_file.close();
-
-    //                 break;
-    //             }
-    //         }
-    //     } else {
-    //         cout << "Invalid Option";
-    //     }
-    // }
-
-    // Account sampleAccount("Sample Account", "Sample Password");
-    
-    // Profile sampleProfileOne("Profile One");
-    // Profile sampleProfileTwo("Profile Two");
-    // Profile sampleProfileThree("Profile Three");
-
-    // Deck sampleDeckOne("Deck One", 0);
-    // Deck sampleDeckTwo("Deck Two", 0);
-    // Deck sampleDeckThree("Deck Three", 0);
-
-    // Card sampleCardOne("Question One", "Answer One");
-    // Card sampleCardTwo("Question Two", "Answer Two");
-    // Card sampleCardThree("Question Three", "Answer Three");
-    // Card sampleCardFour("Question Four", "Answer Four");
-    // Card sampleCardFive("Question Five", "Answer Five");
-    // Card sampleCardSix("Question Six", "Answer Six");
-    // Card sampleCardSeven("Question Seven", "Answer Seven");
-
-    // sampleDeckOne.cards = {sampleCardOne, sampleCardTwo};
-    // sampleDeckTwo.cards = {sampleCardThree, sampleCardFour, sampleCardFive};
-    // sampleDeckThree.cards = {sampleCardOne, sampleCardTwo, sampleCardFour, sampleCardSix, sampleCardSeven};
-
-    // sampleProfileOne.decks = {sampleDeckOne, sampleDeckTwo, sampleDeckThree};
-    // sampleProfileTwo.decks = {sampleDeckTwo};
-    // sampleProfileThree.decks = {sampleDeckOne, sampleDeckThree};
-
-    // sampleAccount.profiles = {sampleProfileOne, sampleProfileTwo, sampleProfileThree};
-
     return 0;
-}   
+}
