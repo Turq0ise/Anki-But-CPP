@@ -10,10 +10,12 @@ using json = nlohmann::json;
 class Card {
     public:
         string front, back;
+        int type = 0; // 💡 Added this property so the compiler recognizes .type
 
         Card() = default;
-        Card(string front, string back):
-            front(front), back(back) {}
+        // Updated constructor to accept the type layout parameter
+        Card(string front, string back, int type = 0):
+            front(front), back(back), type(type) {}
 };
 
 // Doesn't work yet, just a placeholder
