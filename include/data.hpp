@@ -18,18 +18,6 @@ class Card {
             front(front), back(back), type(type) {}
 };
 
-// Doesn't work yet, just a placeholder
-class ReversibleCard: public Card {
-    public:
-    string test;
-};
-
-// Doesn't work yet, just a placeholder
-class InputCard: public Card {
-    public:
-        string test;
-};
-
 class Deck {
     public:
         string deckName;

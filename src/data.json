@@ -6,11 +6,46 @@
             {
                 "decks": [
                     {
-                        "cards": [],
+                        "cards": [
+                            {
+                                "back": "Test Answer",
+                                "front": "Test Question"
+                            }
+                        ],
                         "cardsIncSub": [],
                         "deckName": "Default Deck",
                         "level": 0,
                         "subDecks": []
+                    },
+                    {
+                        "cards": [],
+                        "cardsIncSub": [],
+                        "deckName": "Test",
+                        "level": 0,
+                        "subDecks": [
+                            {
+                                "cards": [],
+                                "cardsIncSub": [],
+                                "deckName": "Test Again",
+                                "level": 1,
+                                "subDecks": []
+                            }
+                        ]
+                    },
+                    {
+                        "cards": [],
+                        "cardsIncSub": [],
+                        "deckName": "Bruh",
+                        "level": 0,
+                        "subDecks": [
+                            {
+                                "cards": [],
+                                "cardsIncSub": [],
+                                "deckName": "Test",
+                                "level": 1,
+                                "subDecks": []
+                            }
+                        ]
                     }
                 ],
                 "profileName": "Default Profile"
