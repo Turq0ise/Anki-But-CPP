@@ -12,6 +12,12 @@ class Card {
         string front, back;
         int type = 0; // 💡 Added this property so the compiler recognizes .type
 
+        // FSRS DIFFICULTY! [mj]
+        double difficulty = 5.0;        // 1.0 easiest -> 10.0 hardrst
+        double stability = 1.0;         // days until recall probabiltiy drops -> 0.9
+        int repetitions = 0;            // no. times reviewed
+        int nextReview = 0;             // days sincel ast review
+
         Card() = default;
         // Updated constructor to accept the type layout parameter
         Card(string front, string back, int type = 0):
@@ -39,6 +45,12 @@ class Profile {
     public:
         string profileName;
         vector<Deck> decks;
+
+        // Statistics Fields [mj]
+        int totalStudied = 0;
+        int totalCorrect = 0;
+        int totalWrong = 0;
+        int streak = 0;
 
         Profile() = default;
         Profile(string profileName):
@@ -71,12 +83,24 @@ namespace nlohmann {
             j = json {
                 {"front", c.front},
                 {"back", c.back}
+                
+                // FSRS [mj]
+                {"difficulty", c.difficulty},
+                {"stability", c.stability},
+                {"repetitions", c.repetitions},
+                {"nextReview", c.nextReview}
             };
         } 
 
         static void from_json(const json &j, Card &c) {
             c.front = j.at("front").get<string>();
             c.back = j.at("back").get<string>();
+
+            // FSRS [mj]
+            if (j.contains("difficulty")) c.difficulty = j.at("difficulty").get<double>();
+            if (j.contains("stability")) c.stability = j.at("stability").get<double>();
+            if (j.contains("repetitions")) c.repetitions = j.at("repetitions").get<int>();
+            if (j.contains("nextReview")) c.nextReview = j.at("nextReview").get<int>();
         }
     };
 
@@ -107,12 +131,24 @@ namespace nlohmann {
             j = json {
                 {"profileName", c.profileName},
                 {"decks", c.decks}
+
+                // FSRS [mj]
+                {"totalStudied", c.totalStudied},
+                {"totalCorrect", c.totalCorrect},
+                {"totalWrong", c.totalWrong},
+                {"streak", c.streak}
             };
         } 
 
         static void from_json(const json &j, Profile &c) {
             c.profileName = j.at("profileName").get<string>();
             c.decks = j.at("decks").get<vector<Deck>>();
+            
+            // FSRS [mj]
+            if (j.contains("totalStudied")) c.totalStudied = j.at("totalStudied").get<int>();
+            if (j.contains("totalCorrect")) c.totalCorrect = j.at("totalCorrect").get<int>();
+            if (j.contains("totalWrong")) c.totalWrong = j.at("totalWrong").get<int>();
+            if (j.contains("streak")) c.streak = j.at("streak").get<int>();
         }
     };
 
