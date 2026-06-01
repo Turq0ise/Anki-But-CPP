@@ -3,28 +3,12 @@
 #include <iomanip>
 #include <fstream>
 #include <functional>
+#include <limits>
+#include <vector>
+#include <unordered_map>
 
 using namespace std;
 
-/*
-    getChoice Function:
-        Handles user input in decisions like:
-            [1] Login
-            [2] Sign Up
-            [0] Exit
-        Will also automatically print the colon space
-        Returns a character since a decision like this might show up later:
-            [1] Deck 6
-            [2] Deck 7
-            [3] Deck 8
-            [4] Deck 9
-            [5] Deck 10
-            [<] Previous Page
-            [>] Next Page
-            [8] Create Deck
-            [9] Settings
-            [0] Back
-*/
 char getChoice() {
     char choice;
     cout << ": ";
@@ -36,13 +20,6 @@ char getChoice() {
     return choice;
 }
 
-/*
-    saveToFile Function:
-        Handles saving the user data into the json file
-        Takes only one parameter:  
-            Reference to the instance of an accounts class
-        Since our data structure nests the cards, decks, and profiles all under the accounts, triggering the class to json conversion on the account class would subsequently trigger the class to json conversions of the profile, deck, and card classes.
-*/
 void saveToFile(const std::unordered_map<string, Account> &accounts) {
     json j = accounts;
     ofstream outputFile("data.json");
@@ -50,11 +27,6 @@ void saveToFile(const std::unordered_map<string, Account> &accounts) {
     outputFile.close();
 }
 
-/*
-    loadFromFile Function:
-        Handles the extraction of data from the json file into an unordered map of account classes usable in C++ code
-        It returns the onrodered map itself
-*/
 unordered_map<string, Account> loadFromFile() {
     ifstream file("data.json");
     if(!file.is_open()) return {};
@@ -103,15 +75,7 @@ enum class AppState {
     SIGNUP,
     PROFILES,
     CREATE_PROFILE,
-    ACCOUNT_SETTINGS,
-        CHANGE_ACCOUNT_NAME,
-        CHANGE_ACCOUNT_PASSWORD,
-        DELETE_ACCOUNT,
     PROFILE_DASHBOARD,
-    SETTINGS,
-    PROFILE_SETTINGS,
-        CHANGE_PROFILE_NAME,
-        DELETE_PROFILE,
     CREATE_DECK,
     DECK_DASHBOARD,
     DECK_SETTINGS,
@@ -120,31 +84,8 @@ enum class AppState {
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
     
-    BACK,
     EXIT
 };
-
-vector<AppState> breadcrumbs;
-
-/*
-    AppState Handle Functions:
-        Below are and would be the handle functions of each AppState
-        These would contain the user interactions such as the text seen in the command line and the user input
-            Ex: MAIN_MENU
-                ===== ANKI IN C++ =====
-                [1] Login
-                [2] Sign Up
-                [0] Exit
-                : 
-            Ex: LOGIN
-                === LOGIN ===
-                Enter Username: [user input here]
-                Enter Password: [user input here]
-        These functions return an AppState to indicate what "page" should be displayed to the user next. More on this on the comments on the main function
-        Naming convention: Lower Camel Case
-        First line of the function should always be, this clears the command line before printing:
-            std::cout << "\033[2J\033[1;1H";
-*/
 
 AppState handleMainMenu() {
     std::cout << "\033[2J\033[1;1H";
@@ -159,18 +100,6 @@ AppState handleMainMenu() {
     return AppState::MAIN_MENU;
 }
 
-AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser) {
-    if(activeUser == nullptr) {
-        breadcrumbs.clear();
-        breadcrumbs.push_back(AppState::MAIN_MENU);
-        return breadcrumbs.back();
-    }
-
-    if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
-    breadcrumbs.pop_back();
-    return breadcrumbs.back();
-}
-
 AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H";
     cout << "=== LOGIN ===\n";
@@ -183,16 +112,18 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
         return AppState::LOGIN;
     }
     if(allAccounts[username].password != password) {
         cout << "Account does not exist or Password is Incorrect, Please try again\n";
         cout << "Press Enter to try again...";
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
         return AppState::LOGIN;
     }
 
-    activeUser = &allAccounts[username];
+    activeUser = &allAccounts[username]; // Sets active session user pointer cleanly
     return AppState::PROFILES;
 }
 
@@ -215,7 +146,8 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
     cout << "Are you sure about this Username and Password? [Y/n]: ";
     cin >> confirm;
     if(confirm == 'Y') {
-        allAccounts[username] = Account(username, password);
+        Account newAcc(username, password);
+        allAccounts[username] = newAcc;
         saveToFile(allAccounts);
         activeUser = &allAccounts[username];
         
@@ -881,38 +813,11 @@ int main() {
     int profilePage = 0;
     int deckPage = 0;
 
-    /*
-        The code below connects the AppStates to their respective handle Functions
-    */
     AppState currentState = AppState::MAIN_MENU;
     while(currentState != AppState::EXIT) {
-        if(activeUser == nullptr) {
-            profilePage = 0;
-            deckPage = 0;
-        }
-        if(activeProfile == nullptr) {
-            deckPage = 0;
-        }
-
-        if( currentState != AppState::BACK &&
-            currentState != AppState::SIGNUP &&
-            currentState != AppState::CHANGE_ACCOUNT_NAME &&
-            currentState != AppState::CHANGE_ACCOUNT_PASSWORD &&
-            currentState != AppState::DELETE_ACCOUNT &&
-            currentState != AppState::CREATE_PROFILE &&
-            currentState != AppState::CHANGE_PROFILE_NAME &&
-            currentState != AppState::DELETE_PROFILE &&
-            currentState != AppState::CREATE_DECK)
-            breadcrumbs.push_back(currentState);
-
         switch(currentState) {
             case AppState::MAIN_MENU:
                 currentState = handleMainMenu();
-                activeUser = nullptr;
-                activeProfile = nullptr;
-                break;
-            case AppState::BACK:
-                currentState = handleBack(breadcrumbs, activeUser);
                 break;
             case AppState::LOGIN:
                 currentState = handleLogin(allAccounts, activeUser);
@@ -929,29 +834,17 @@ int main() {
             case AppState::PROFILE_DASHBOARD:
                 currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, activeDeck);
                 break;
-            case AppState::ACCOUNT_SETTINGS:
-                currentState = handleAccountSettings(allAccounts, activeUser);
+            case AppState::CARD_MANAGEMENT: {
+                Deck* activeDeckPtr = nullptr;
+                if (activeUser && !activeUser->profiles.empty() && !activeUser->profiles[0].decks.empty()) {
+                    activeDeckPtr = &activeUser->profiles[0].decks[0]; 
+                }
+                
+                currentState = handleCardManagement(activeDeckPtr, allAccounts);
                 break;
-            case AppState::CHANGE_ACCOUNT_NAME:
-                currentState = handleChangeAccountName(allAccounts, activeUser);
-                break;
-            case AppState::CHANGE_ACCOUNT_PASSWORD:
-                currentState = handleChangeAccountPassword(allAccounts, activeUser);
-                break;
-            case AppState::DELETE_ACCOUNT:
-                currentState = handleDeleteAccount(allAccounts, activeUser);
-                break;
-            case AppState::SETTINGS:
-                currentState = handleSettings(breadcrumbs);
-                break;
-            case AppState::PROFILE_SETTINGS:
-                currentState = handleProfileSettings(allAccounts, activeUser, activeProfile);
-                break;
-            case AppState::CHANGE_PROFILE_NAME:
-                currentState = handleChangeProfileName(allAccounts, activeUser, activeProfile);
-                break;
-            case AppState::DELETE_PROFILE:
-                currentState = handleDeleteProfile(allAccounts, activeUser, activeProfile);
+            }
+            default:
+                currentState = AppState::MAIN_MENU;
                 break;
             case AppState::CREATE_DECK:
                 currentState = handleCreateDeck(allAccounts, activeUser, activeProfile, activeDeck);
@@ -968,4 +861,4 @@ int main() {
     }
 
     return 0;
-}   
+}
