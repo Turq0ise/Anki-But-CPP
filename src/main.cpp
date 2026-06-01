@@ -685,6 +685,7 @@ AppState handleCardManagement() {
     return AppState::MAIN_MENU; 
 }
 
+
 /*
     main Function:
         This is the function that gets called as soon as the program starts.
