@@ -6,37 +6,8 @@
 #include <limits>
 #include <vector>
 #include <unordered_map>
-#include <chrono>      // timestamps
-#include <filesystem>  // backups
-#include <sstream>     // string streams
-#include <algorithm>   // sort
 
 using namespace std;
-
-int getCurrentDay() {
-    static int day = 0;
-    return day++;
-}
-
-/*
-    getChoice Function:
-        Handles user input in decisions like:
-            [1] Login
-            [2] Sign Up
-            [0] Exit
-        Will also automatically print the colon space
-        Returns a character since a decision like this might show up later:
-            [1] Deck 6
-            [2] Deck 7
-            [3] Deck 8
-            [4] Deck 9
-            [5] Deck 10
-            [<] Previous Page
-            [>] Next Page
-            [8] Create Deck
-            [9] Settings
-            [0] Back
-*/
 
 char getChoice() {
     char choice;
@@ -112,8 +83,6 @@ enum class AppState {
         DELETE_DECK,
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
-    BACKUPS,
-    STATISTICS,
     
     EXIT
 };
@@ -832,93 +801,6 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
     return AppState::DECK_DASHBOARD; 
 }
 
-// FSRS functions [MJ]
-double getNewDifficulty(double currentDiff, int rating) {
-    // rating: 1=Again, 2=Hard, 3=Good, 4=Easy
-    double next = currentDiff;
-    if (rating == 1) next += 2;
-    else if (rating == 2) next += 1;
-    else if (rating == 4) next -= 2;
-    if (next < 1) return 1;
-    if (next > 10) return 10;
-    return next;
-}
-
-double getNewStability(double currentStab, int rating) {
-    if (rating == 1) return currentStab / 2;
-    if (rating == 2) return currentStab * 1.5;
-    if (rating == 3) return currentStab * 2.5;
-    return currentStab * 4;
-}
-
-int getNewInterval(double stability, int rating) {
-    if (rating == 1) return 1;
-    int days = (int)stability;
-    if (days < 1) days = 1;
-    if (days > 365) days = 365;
-    return days;
-}
-
-void updateCard(Card& card, int rating) {
-    card.difficulty = getNewDifficulty(card.difficulty, rating);
-    card.stability = getNewStability(card.stability, rating);
-    card.nextReview = getCurrentDay() + getNewInterval(card.stability, rating);
-    card.repetitions++;
-}
-
-void showStats(Profile* p) {
-    cout << "\033[2J\033[1;1H";
-    cout << "=== STATISTICS ===\n";
-    cout << "Total studied: " << p->totalStudied << "\n";
-    cout << "Correct: " << p->totalCorrect << "\n";
-    cout << "Wrong: " << p->totalWrong << "\n";
-    if (p->totalStudied > 0)
-        cout << "Success: " << (p->totalCorrect * 100 / p->totalStudied) << "%\n";
-    cout << "Current streak: " << p->streak << "\n";
-    cout << "\n[0] Back\n";
-}
-
-void simpleBackup(unordered_map<string, Account>& accounts) {
-    json j = accounts;
-    ofstream file("backup.json");
-    file << j.dump(4);
-    cout << "Backup saved to backup.json\n";
-}
-
-void simpleRestore(unordered_map<string, Account>& accounts) {
-    ifstream file("backup.json");
-    if (!file) {
-        cout << "No backup found.\n";
-        return;
-    }
-    json j;
-    file >> j;
-    accounts = j.get<unordered_map<string, Account>>();
-    saveToFile(accounts);
-    cout << "Restored from backup.json\n";
-}
-
-AppState handleBackups(unordered_map<string, Account>& accounts) {
-    cout << "\033[2J\033[1;1H";
-    cout << "=== BACKUP ===\n";
-    cout << "[1] Create Backup\n";
-    cout << "[2] Restore Backup\n";
-    cout << "[0] Back\n";
-    char c = getChoice();
-    if (c == '1') simpleBackup(accounts);
-    else if (c == '2') simpleRestore(accounts);
-    cout << "Press Enter...";
-    cin.ignore(); cin.get();
-    return AppState::BACKUPS;
-}
-
-AppState handleStatistics(Profile* p) {
-    showStats(p);
-    char c = getChoice();
-    if (c == '0') return AppState::PROFILE_DASHBOARD;
-    return AppState::STATISTICS;
-}
-
 /*
     main Function:
         This is the function that gets called as soon as the program starts.
@@ -946,25 +828,24 @@ int main() {
             case AppState::PROFILES:
                 currentState = handleProfiles(allAccounts, activeUser, profilePage, activeProfile);
                 break;
-            
             case AppState::CREATE_PROFILE:
                 currentState = handleCreateProfile(allAccounts, activeUser, activeProfile);
                 break;
             case AppState::PROFILE_DASHBOARD:
                 currentState = handleProfileDashboard(allAccounts, activeUser, activeProfile, deckPage, activeDeck);
                 break;
-//             case AppState::CARD_MANAGEMENT: {
-//                 Deck* activeDeckPtr = nullptr;
-//                 if (activeUser && !activeUser->profiles.empty() && !activeUser->profiles[0].decks.empty()) {
-//                     activeDeckPtr = &activeUser->profiles[0].decks[0]; 
-//                 }
+            case AppState::CARD_MANAGEMENT: {
+                Deck* activeDeckPtr = nullptr;
+                if (activeUser && !activeUser->profiles.empty() && !activeUser->profiles[0].decks.empty()) {
+                    activeDeckPtr = &activeUser->profiles[0].decks[0]; 
+                }
                 
-//                 currentState = handleCardManagement(activeDeckPtr, allAccounts);
-//                 break;
-//             }
-//             default:
-//                 currentState = AppState::MAIN_MENU;
-//                 break;
+                currentState = handleCardManagement(activeDeckPtr, allAccounts);
+                break;
+            }
+            default:
+                currentState = AppState::MAIN_MENU;
+                break;
             case AppState::CREATE_DECK:
                 currentState = handleCreateDeck(allAccounts, activeUser, activeProfile, activeDeck);
                 break;
@@ -976,11 +857,6 @@ int main() {
             case AppState::CARD_MANAGEMENT:
                 currentState = handleCardManagement(allAccounts, activeDeck);
                 break;
-            case AppState::BACKUPS:  //TO BE FIXED
-                currentState = handleBackups();
-                break;
-            case AppState::STATISTICS: //TO BE FIXED
-                currentState = handleStatistics(activeProfile);
         }
     }
 
