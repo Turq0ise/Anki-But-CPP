@@ -52,14 +52,51 @@
                     {
                         "cards": [
                             {
-                                "back": "Test Answer",
-                                "front": "Test Question"
+                                "back": "Answer 1",
+                                "front": "Question 1"
+                            },
+                            {
+                                "back": "Answer 2",
+                                "front": "Question 2"
+                            },
+                            {
+                                "back": "Test Answer Again",
+                                "front": "Test Question Again"
+                            },
+                            {
+                                "back": "A",
+                                "front": "Q"
+                            },
+                            {
+                                "back": "Hmm",
+                                "front": "Hmm"
                             }
                         ],
                         "cardsIncSub": [],
                         "deckName": "Default Deck",
                         "level": 0,
-                        "subDecks": []
+                        "subDecks": [
+                            {
+                                "cards": [
+                                    {
+                                        "back": "Test Answer",
+                                        "front": "Test Question"
+                                    }
+                                ],
+                                "cardsIncSub": [],
+                                "deckName": "SubDeck",
+                                "level": 1,
+                                "subDecks": [
+                                    {
+                                        "cards": [],
+                                        "cardsIncSub": [],
+                                        "deckName": "TestTest",
+                                        "level": 0,
+                                        "subDecks": []
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     {
                         "cards": [],
@@ -79,14 +116,14 @@
                     {
                         "cards": [],
                         "cardsIncSub": [],
-                        "deckName": "Bruh",
+                        "deckName": "Deck 1",
                         "level": 0,
                         "subDecks": [
                             {
                                 "cards": [],
                                 "cardsIncSub": [],
-                                "deckName": "Test",
-                                "level": 1,
+                                "deckName": "Test Deck",
+                                "level": 0,
                                 "subDecks": []
                             }
                         ]
@@ -138,66 +175,6 @@
                     }
                 ],
                 "profileName": "Test Profile 2"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Test Profile 3"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Test Test Test"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Hmmmm test"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Test Test"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Last Test"
             }
         ]
     },
