@@ -869,11 +869,20 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
             cout << "Enter Back (Answer/Definition): ";
             getline(cin, back);
 
-            // Directly pushed to your database struct!
-            activeDeck->cards.push_back(Card(front, back, typeChoice));
+            // === UPDATED SECTION ===
+            if (typeChoice == 1) {
+                activeDeck->cards.push_back(Card(front, back, 1)); 
+                activeDeck->cards.push_back(Card(back, front, 1)); 
+                cout << "\nSuccess: 2 Cards generated (Forward & Reversed)!";
+            } else {
+                activeDeck->cards.push_back(Card(front, back, typeChoice));
+                cout << "\nSuccess: Card added and synchronized directly!";
+            }
+            // =======================
+
             saveToFile(allAccounts); // Instantly commits updates to data.json
 
-            cout << "\nSuccess: Card added and synchronized directly! Press Enter to continue...";
+            cout << " Press Enter to continue...";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cin.get();
         }
