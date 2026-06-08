@@ -134,8 +134,7 @@ enum class AppState {
         DELETE_DECK,
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
-
-    VIEW_CARDS_TESTING,
+    REVIEW_CARDS,
     
     BACK,
     EXIT
@@ -643,7 +642,7 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
 
     cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n";
     if(activeDeck->subDecks.size() > 0) cout << "[4] Show Subdecks\n";
-    cout << "[5] View Cards (For testing)\n[8] Settings\n[9] Back\n[0] Sign Out\n";
+    cout << "[8] Settings\n[9] Back\n[0] Sign Out\n";
 
     char choice = getChoice();
     if(choice == '0') {
@@ -655,15 +654,13 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
     } else if(choice == '8') {
         return AppState::SETTINGS;
     } else if(choice == '1') {
-        // return AppState::REVIEW_DECK;
+        return AppState::REVIEW_CARDS;
     } else if(choice == '2') {
         return AppState::CARD_MANAGEMENT;
     } else if(choice == '3') {
         return AppState::CREATE_DECK;
     } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
         return AppState::SHOW_SUBDECKS;
-    } else if(choice == '5') {
-        return AppState::VIEW_CARDS_TESTING;
     }
 
     return AppState::DECK_DASHBOARD;
@@ -1031,7 +1028,7 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
     return AppState::BACK; 
 }
 
-AppState handleViewCardTesting(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
+AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
     string deckNameString;
     for(size_t i = 0; i < deckBreadcrumbs.size(); ++i) {
         if(i == 0) {
@@ -1043,23 +1040,59 @@ AppState handleViewCardTesting(unordered_map<string,Account> &allAccounts, Accou
 
     vector<Card*> cards = getCardsFromDeck(*activeDeck);
 
-bool isReviewing = true;
-int cardIndex = 0;
-while(isReviewing && (cardIndex < cards.size())) {
-if(cardIndex != 0) cout << "\n...............................";
+    bool isReviewing = true;
+    while(isReviewing && (reviewIndex < cards.size())) {
+        if(reviewIndex != 0) cout << "\n...........................................";
 
-std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== REVIEWING DECK: "<< deckNameString << " ===\n";
+        std::cout << "\033[2J\033[1;1H\n";
+        cout << "=== REVIEWING DECK: "<< deckNameString << " ===\n\n";
+        cout << cards[reviewIndex]->front << "\n\n";
 
- int cardType = cards[cardIndex]->.type;
-if(cardType == 0) {
+        int cardType = cards[reviewIndex]->type;
+        if(cardType == 0 || cardType == 1) {
+            cout << "[1] Show Answer\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
 
-} else if(cardType == 1) {
+            char choice = getChoice();
+            if(choice == '0') {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(choice == '9') { 
+                return AppState::BACK;
+            } else if(choice == '8') {
+                // return AppState::EDIT_CARD;
+            } else if(choice == '1') {
+                cout << "\n" << cards[reviewIndex]->back << "\n";
+            } else {
+                return AppState::REVIEW_CARDS;
+            }
+        } else if(cardType == 2) {
+            cout << "To answer the flashcard, type your answer enclosed in square brackets\n\n";
+            cout << "[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
 
-} else if(cardType == 2) {
+            cout << ": "; string input; getline(cin >> ws, input);
+            if(input == "0") {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(input == "9") { 
+                return AppState::BACK;
+            } else if(input == "8") {
+                // return AppState::EDIT_CARD;
+            } else if((input.front() == '[') && (input.back() == ']')) {
+                if(input == "[" + cards[reviewIndex]->back + "]") {
+                    cout << "\ntomoh\n";
+                } else {
+                    cout << "\nntnt\n";
+                }
+            }
+        }
 
-}
-}
+        // rating would go here, input buffer na lang in the meantime
+        cout << "Press any key to proceed to the next card...";
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        cin.get();
+        
+        reviewIndex++;
+    }
 
     
     for(size_t i = 0; i < cards.size(); ++i) {
@@ -1084,6 +1117,7 @@ int main() {
     Deck* activeDeck = nullptr;
     int profilePage = 0;
     int deckPage = 0;
+    int reviewIndex = 0;
 
     /*
         The code below connects the AppStates to their respective handle Functions
@@ -1180,8 +1214,8 @@ int main() {
             case AppState::CARD_MANAGEMENT:
                 currentState = handleCardManagement(allAccounts, activeDeck);
                 break;
-            case AppState::VIEW_CARDS_TESTING:
-                currentState = handleViewCardTesting(allAccounts, activeUser, activeProfile, activeDeck);
+            case AppState::REVIEW_CARDS:
+                currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
                 break;
         }
     }
