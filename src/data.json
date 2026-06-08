@@ -8,18 +8,9 @@
                     {
                         "cards": [
                             {
-                                "back": "Answer 1",
+                                "back": "ANSWER 1",
                                 "difficulty": 5.0,
                                 "front": "QUESTION 1",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 0
-                            },
-                            {
-                                "back": "Test Answer Again",
-                                "difficulty": 5.0,
-                                "front": "Test Question Again",
                                 "nextReview": 0,
                                 "repetitions": 0,
                                 "stability": 1.0,
@@ -78,9 +69,46 @@
                                         "cardsIncSub": [],
                                         "deckName": "TestTest",
                                         "level": 2,
+                                        "subDecks": [
+                                            {
+                                                "cards": [],
+                                                "cardsIncSub": [],
+                                                "deckName": "TestTest",
+                                                "level": 3,
+                                                "subDecks": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "cards": [],
+                                        "cardsIncSub": [],
+                                        "deckName": "Test",
+                                        "level": 2,
                                         "subDecks": []
                                     }
                                 ]
+                            },
+                            {
+                                "cards": [],
+                                "cardsIncSub": [],
+                                "deckName": "SubDeck 2",
+                                "level": 1,
+                                "subDecks": [
+                                    {
+                                        "cards": [],
+                                        "cardsIncSub": [],
+                                        "deckName": "TestTest",
+                                        "level": 2,
+                                        "subDecks": []
+                                    }
+                                ]
+                            },
+                            {
+                                "cards": [],
+                                "cardsIncSub": [],
+                                "deckName": "Weh",
+                                "level": 1,
+                                "subDecks": []
                             }
                         ]
                     },
@@ -102,168 +130,56 @@
                     {
                         "cards": [],
                         "cardsIncSub": [],
-                        "deckName": "Deck 1",
+                        "deckName": "CPE103L",
                         "level": 0,
                         "subDecks": [
                             {
                                 "cards": [],
                                 "cardsIncSub": [],
-                                "deckName": "Test Deck",
+                                "deckName": "Object-Oriented Programming",
                                 "level": 1,
-                                "subDecks": []
+                                "subDecks": [
+                                    {
+                                        "cards": [],
+                                        "cardsIncSub": [],
+                                        "deckName": "Inheritance",
+                                        "level": 2,
+                                        "subDecks": [
+                                            {
+                                                "cards": [],
+                                                "cardsIncSub": [],
+                                                "deckName": "Test",
+                                                "level": 3,
+                                                "subDecks": []
+                                            },
+                                            {
+                                                "cards": [],
+                                                "cardsIncSub": [],
+                                                "deckName": "TestAgain",
+                                                "level": 3,
+                                                "subDecks": [
+                                                    {
+                                                        "cards": [],
+                                                        "cardsIncSub": [],
+                                                        "deckName": "Inherit",
+                                                        "level": 4,
+                                                        "subDecks": [
+                                                            {
+                                                                "cards": [],
+                                                                "cardsIncSub": [],
+                                                                "deckName": "T",
+                                                                "level": 5,
+                                                                "subDecks": []
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         ]
-                    },
-                    {
-                        "cards": [
-                            {
-                                "back": "Answer",
-                                "difficulty": 5.0,
-                                "front": "Question",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 2
-                            }
-                        ],
-                        "cardsIncSub": [],
-                        "deckName": "Secondary",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Default Profile",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [
-                            {
-                                "back": "Answer",
-                                "difficulty": 5.0,
-                                "front": "Question",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 0
-                            }
-                        ],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Test Profile",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Test Profile 2",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            }
-        ]
-    },
-    "Test Account 1": {
-        "accountName": "Test Account 1",
-        "password": "Password",
-        "profiles": [
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Default Profile",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            }
-        ]
-    },
-    "mark": {
-        "accountName": "mark",
-        "password": "1234",
-        "profiles": [
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Default Profile",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "test",
-                "streak": 0,
-                "totalCorrect": 0,
-                "totalStudied": 0,
-                "totalWrong": 0
-            }
-        ]
-    },
-    "mj": {
-        "accountName": "mj",
-        "password": "1234",
-        "profiles": [
-            {
-                "decks": [
-                    {
-                        "cards": [
-                            {
-                                "back": "World",
-                                "difficulty": 5.0,
-                                "front": "Hello",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 0
-                            }
-                        ],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
                     }
                 ],
                 "profileName": "Default Profile",
