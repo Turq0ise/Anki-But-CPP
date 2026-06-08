@@ -4,8 +4,56 @@
 #include <fstream>
 #include <functional>
 #include <algorithm>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
+
+void showStatistics(const Profile& activeProfile) {
+    cout << "\n====================================\n";
+    cout << "      YOUR STUDY STATISTICS\n";
+    cout << "====================================\n";
+    cout << "Profile Name: " << activeProfile.profileName << "\n";
+    cout << "Current Streak: " << activeProfile.streak << " days\n";
+    cout << "Total Cards Studied: " << activeProfile.totalStudied << "\n";
+    cout << "Total Correct: " << activeProfile.totalCorrect << "\n";
+    cout << "Total Wrong: " << activeProfile.totalWrong << "\n";
+
+    if (activeProfile.totalStudied > 0) {
+        double accuracy = (static_cast<double>(activeProfile.totalCorrect) / activeProfile.totalStudied) * 100.0;
+        cout << "Accuracy: " << fixed << setprecision(2) << accuracy << "%\n";
+    } else {
+        cout << "Accuracy: N/A (Study some cards first!)\n";
+    }
+    cout << "====================================\n\n";
+}
+
+void createBackup() {
+    cout << "\nCreating backup...\n";
+    
+    // Open the original file to read
+    ifstream sourceFile("data.json");
+    if (!sourceFile.is_open()) {
+        cout << "[ERROR] Could not find 'data.json' to backup. Have you saved any data yet?\n";
+        return;
+    }
+
+    // Create a new file to write to
+    ofstream backupFile("data_backup.json");
+    if (!backupFile.is_open()) {
+        cout << "[ERROR] Something went wrong creating the backup file.\n";
+        return;
+    }
+
+    // Copy everything from one file to another
+    backupFile << sourceFile.rdbuf();
+
+    // Close files
+    sourceFile.close();
+    backupFile.close();
+    
+    cout << "[SUCCESS] Backup created successfully as 'data_backup.json'!\n";
+}
 
 /*
     getChoice Function:
@@ -389,7 +437,7 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
         } 
         cout << "\n";
     }
-    cout << "[7] Create Deck\n[8] Settings\n[9] Back\n[0] Sign Out\n";
+    cout << "[6] Show Statistics\n[7] Create Deck\n[8] Settings\n[9] Back\n[0] Sign Out\n";
 
     char choice = getChoice();
     if(choice == '0') {
@@ -401,6 +449,13 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
         return AppState::SETTINGS;
     } else if(choice == '7') {
         return AppState::CREATE_DECK;
+    } else if(choice == '6') {
+        std::cout << "\033[2J\033[1;1H\n";
+        showStatistics(*activeProfile);
+        cout << "Press Enter to go back...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        return AppState::PROFILE_DASHBOARD;
     } else if(choice == '<' && numberOfPages > 1 && ((deckPage > 0 && deckPage < (numberOfPages - 1)) || (deckPage == (numberOfPages - 1)))) {
         deckPage = deckPage - 1;
         return AppState::PROFILE_DASHBOARD;
@@ -420,12 +475,19 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
 AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
     cout << "=== ACCOUNT SETTINGS: " << activeUser->accountName << " ===\n\n";
-    cout << "[1] Change Account Name\n[2] Change Password\n[3] Delete Account\n[0] Back\n";
+    cout << "[1] Change Account Name\n[2] Change Password\n[3] Delete Account\n[4] Create Backup\n[0] Back\n";
 
     char choice = getChoice();
     if(choice == '1') return AppState::CHANGE_ACCOUNT_NAME;
     if(choice == '2') return AppState::CHANGE_ACCOUNT_PASSWORD;
     if(choice == '3') return AppState::DELETE_ACCOUNT;
+    if(choice == '4') {
+        createBackup();
+        cout << "Press Enter to go back...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        return AppState::ACCOUNT_SETTINGS;
+    }
     if(choice == '0') return AppState::BACK;
 
     return AppState::ACCOUNT_SETTINGS;
@@ -1087,10 +1149,32 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         }
 
         // rating would go here, input buffer na lang in the meantime
-        cout << "Press any key to proceed to the next card...";
+        /*
+       cout << "Press any key to proceed to the next card...";
         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         cin.get();
         
+        */
+       cout << "Did you get this card correct? [Y/n]: ";
+       char grade;
+       cin >> grade;
+
+       // Update Stat
+       activeProfile->totalStudied++;
+       if (grade == 'Y' || grade == 'y') {
+           activeProfile->totalCorrect++;
+       } else {
+            activeProfile->totalWrong++;
+       }
+
+       // Save to data.json
+       saveToFile(allAccounts);
+
+       cout << "Press Enter to proceed to the next card...";
+
+       cin.ignore(numeric_limits<streamsize>::max(), '\n');
+       cin.get();
+
         reviewIndex++;
     }
 
