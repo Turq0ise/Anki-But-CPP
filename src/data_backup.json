@@ -241,37 +241,5 @@
                 "totalWrong": 0
             }
         ]
-    },
-    "mj": {
-        "accountName": "mj",
-        "password": "1234",
-        "profiles": [
-            {
-                "decks": [
-                    {
-                        "cards": [
-                            {
-                                "back": "World",
-                                "difficulty": 5.0,
-                                "front": "Hello",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 0
-                            }
-                        ],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Default Profile",
-                "streak": 0,
-                "totalCorrect": 1,
-                "totalStudied": 1,
-                "totalWrong": 0
-            }
-        ]
     }
 }
