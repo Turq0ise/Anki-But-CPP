@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <fstream>
 #include <functional>
+#include <algorithm>
 
 using namespace std;
 
@@ -133,8 +134,7 @@ enum class AppState {
         DELETE_DECK,
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
-
-    VIEW_CARDS_TESTING,
+    REVIEW_CARDS,
     
     BACK,
     EXIT
@@ -179,8 +179,8 @@ AppState handleMainMenu() {
 AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &activeDeck) {
     if(activeUser == nullptr) {
         breadcrumbs.clear();
-        breadcrumbs.push_back(AppState::MAIN_MENU);
-        return breadcrumbs.back();
+        // breadcrumbs.push_back(AppState::MAIN_MENU);
+        return AppState::MAIN_MENU;
     }
 
     if(breadcrumbs.rbegin()[0] == AppState::DECK_DASHBOARD || breadcrumbs.rbegin()[0] == AppState::SHOW_SUBDECKS) {
@@ -190,6 +190,27 @@ AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &
 
     if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
     breadcrumbs.pop_back();
+
+    bool invalid = true;
+    while(invalid) {
+        if( breadcrumbs.back() == AppState::LOGIN ||
+            breadcrumbs.back() == AppState::SIGNUP ||
+            breadcrumbs.back() == AppState::CHANGE_ACCOUNT_NAME ||
+            breadcrumbs.back() == AppState::CHANGE_ACCOUNT_PASSWORD ||
+            breadcrumbs.back() == AppState::DELETE_ACCOUNT ||
+            breadcrumbs.back() == AppState::CREATE_PROFILE ||
+            breadcrumbs.back() == AppState::CHANGE_PROFILE_NAME ||
+            breadcrumbs.back() == AppState::DELETE_PROFILE ||
+            breadcrumbs.back() == AppState::CREATE_DECK) {
+                breadcrumbs.pop_back();
+                invalid = true;
+            } else invalid = false;
+    }
+
+    while(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) {
+        breadcrumbs.pop_back();
+    }
+
     return breadcrumbs.back();
 }
 
@@ -438,7 +459,10 @@ AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Acc
     allAccounts.erase(oldUsername);
     saveToFile(allAccounts);
     activeUser = &allAccounts[newUsername];
-    return AppState::ACCOUNT_SETTINGS;
+
+    cout << "Change Account Name Successful, Press any key to continue: ";
+    cin.get();
+    return AppState::BACK;
 }
 
 AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
@@ -475,7 +499,7 @@ AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts,
     activeUser = nullptr;
     cout << "Password Change Successful, Please Log In Again\nEnter any key to proceed...";
     cin.ignore(numeric_limits<streamsize>::max(), '\n');  
-    return AppState::LOGIN;
+    return AppState::BACK;
 }
 
 AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
@@ -618,7 +642,7 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
 
     cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n";
     if(activeDeck->subDecks.size() > 0) cout << "[4] Show Subdecks\n";
-    cout << "[5] View Cards (For testing)\n[8] Settings\n[9] Back\n[0] Sign Out\n";
+    cout << "[8] Settings\n[9] Back\n[0] Sign Out\n";
 
     char choice = getChoice();
     if(choice == '0') {
@@ -630,15 +654,13 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
     } else if(choice == '8') {
         return AppState::SETTINGS;
     } else if(choice == '1') {
-        // return AppState::REVIEW_DECK;
+        return AppState::REVIEW_CARDS;
     } else if(choice == '2') {
         return AppState::CARD_MANAGEMENT;
     } else if(choice == '3') {
         return AppState::CREATE_DECK;
     } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
         return AppState::SHOW_SUBDECKS;
-    } else if(choice == '5') {
-        return AppState::VIEW_CARDS_TESTING;
     }
 
     return AppState::DECK_DASHBOARD;
@@ -802,22 +824,73 @@ AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Accoun
     getline(cin >> ws, newDeckName);
 }
 
+// AppState traceDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck)
+
 // NOT YET WORKING, WILL GO BACK TO THIS
 AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
+    int level = activeDeck->level;
+    vector<int> runningIndex;
+    for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
+        if(activeProfile->decks[i].deckName == deckBreadcrumbs[0]->deckName) {
+            runningIndex.push_back(i);
+            break;
+        }
+    }
+    Deck* runningDeck = &activeProfile->decks[runningIndex[0]];
+
     std::cout << "\033[2J\033[1;1H\n";
     cout << "=== DELETE Deck ===\n";
     cout << "= Current Deck: " << activeDeck->deckName << "\n\n";
-    char confirm;
     cout << "Are you sure you want to delete this Deck and all its Sub Decks and Cards? [Y/n]: ";
+    
+    char confirm;
     cin >> confirm;
     if(confirm == 'Y') {
         string confirmString;
         cout << "\nPlease type your deck name enclosed in square brackets to confirm account deletion: \n";
         getline(cin >> ws, confirmString);
         if(confirmString == ("[" + activeDeck->deckName + "]")) {
+            // while(runningIndex[0] < runningDecks.size()) {
+            //     if(deckBreadcrumbs[0]->deckName == runningDecks[runningIndex[0]].deckName) break;
+            //     runningIndex[0]++;
+            // }
 
+            if(level == 0) {
+                activeProfile->decks.erase(activeProfile->decks.begin() + runningIndex[0]);
+            } else if(level >= 1) {
+                bool early = false;
+                for(size_t i = 1; i < deckBreadcrumbs.size() - 1; i++) {
+                    for(size_t j = 0; runningDeck->subDecks.size(); j++) {
+                        if(deckBreadcrumbs[i]->deckName == runningDeck->subDecks[j].deckName) {
+                            runningIndex.push_back(static_cast<int>(j));
+                            runningDeck = &runningDeck->subDecks[runningIndex[i]];
+                            early = true;
+                            break;
+                        }
+                    }
+                    if(early) break;
+                }
+
+                for(size_t i = 0; i < runningDeck->subDecks.size(); ++i) {
+                    if(runningDeck->subDecks[i].deckName == activeDeck->deckName) {
+                        runningIndex.push_back(static_cast<int>(i));
+                        break;
+                    }
+                }
+
+                runningDeck->subDecks.erase(runningDeck->subDecks.begin() + runningIndex.back());
+            }
+
+            saveToFile(allAccounts);
+            activeDeck = nullptr;
+            cout << "Deleted Successfully\n";
+            cin.get();
+
+            return AppState::BACK;
         }
     }
+
+    return AppState::BACK;
 }
 
 // =========================================================================
@@ -955,11 +1028,73 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
     return AppState::BACK; 
 }
 
-AppState handleViewCardTesting(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
-    std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== VIEW CARDS (FOR TESTING) ===\n";
+AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
+    string deckNameString;
+    for(size_t i = 0; i < deckBreadcrumbs.size(); ++i) {
+        if(i == 0) {
+            deckNameString = deckBreadcrumbs[i]->deckName;
+        } else {
+            deckNameString = deckNameString + "::" + deckBreadcrumbs[i]->deckName;
+        }
+    }
 
     vector<Card*> cards = getCardsFromDeck(*activeDeck);
+
+    bool isReviewing = true;
+    while(isReviewing && (reviewIndex < cards.size())) {
+        if(reviewIndex != 0) cout << "\n...........................................";
+
+        std::cout << "\033[2J\033[1;1H\n";
+        cout << "=== REVIEWING DECK: "<< deckNameString << " ===\n\n";
+        cout << cards[reviewIndex]->front << "\n\n";
+
+        int cardType = cards[reviewIndex]->type;
+        if(cardType == 0 || cardType == 1) {
+            cout << "[1] Show Answer\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+
+            char choice = getChoice();
+            if(choice == '0') {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(choice == '9') { 
+                return AppState::BACK;
+            } else if(choice == '8') {
+                // return AppState::EDIT_CARD;
+            } else if(choice == '1') {
+                cout << "\n" << cards[reviewIndex]->back << "\n";
+            } else {
+                return AppState::REVIEW_CARDS;
+            }
+        } else if(cardType == 2) {
+            cout << "To answer the flashcard, type your answer enclosed in square brackets\n\n";
+            cout << "[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+
+            cout << ": "; string input; getline(cin >> ws, input);
+            if(input == "0") {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(input == "9") { 
+                return AppState::BACK;
+            } else if(input == "8") {
+                // return AppState::EDIT_CARD;
+            } else if((input.front() == '[') && (input.back() == ']')) {
+                if(input == "[" + cards[reviewIndex]->back + "]") {
+                    cout << "\ntomoh\n";
+                } else {
+                    cout << "\nntnt\n";
+                }
+            }
+        }
+
+        // rating would go here, input buffer na lang in the meantime
+        cout << "Press any key to proceed to the next card...";
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        cin.get();
+        
+        reviewIndex++;
+    }
+
+    
     for(size_t i = 0; i < cards.size(); ++i) {
         cout << cards[i]->front << "\n";
     }
@@ -982,6 +1117,7 @@ int main() {
     Deck* activeDeck = nullptr;
     int profilePage = 0;
     int deckPage = 0;
+    int reviewIndex = 0;
 
     /*
         The code below connects the AppStates to their respective handle Functions
@@ -996,19 +1132,16 @@ int main() {
             deckPage = 0;
         }
 
-        if( currentState != AppState::BACK &&
-            currentState != AppState::SIGNUP &&
-            currentState != AppState::CHANGE_ACCOUNT_NAME &&
-            currentState != AppState::CHANGE_ACCOUNT_PASSWORD &&
-            currentState != AppState::DELETE_ACCOUNT &&
-            currentState != AppState::CREATE_PROFILE &&
-            currentState != AppState::CHANGE_PROFILE_NAME &&
-            currentState != AppState::DELETE_PROFILE &&
-            currentState != AppState::CREATE_DECK)
-            breadcrumbs.push_back(currentState);
-
+        if(currentState != AppState::BACK) {
+            if(((breadcrumbs.size() != 0) && (breadcrumbs.back() != currentState)) || (breadcrumbs.size() == 0)) {
+                breadcrumbs.push_back(currentState);
+            }
+        } 
+            
         if(activeDeck != nullptr) {
-            deckBreadcrumbs.push_back(activeDeck);
+            if(((deckBreadcrumbs.size() != 0) && (deckBreadcrumbs.back() != activeDeck)) || (deckBreadcrumbs.size() == 0)) {
+                deckBreadcrumbs.push_back(activeDeck);
+            }
         }
 
         cout << "\n-------------------------------------------";
@@ -1081,8 +1214,8 @@ int main() {
             case AppState::CARD_MANAGEMENT:
                 currentState = handleCardManagement(allAccounts, activeDeck);
                 break;
-            case AppState::VIEW_CARDS_TESTING:
-                currentState = handleViewCardTesting(allAccounts, activeUser, activeProfile, activeDeck);
+            case AppState::REVIEW_CARDS:
+                currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
                 break;
         }
     }

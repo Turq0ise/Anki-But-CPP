@@ -10,7 +10,13 @@ using json = nlohmann::json;
 class Card {
     public:
         string front, back;
-        int type = 0; // 💡 Added this property so the compiler recognizes .type
+        int type = 0; // 0: Regular, 1: Reversible, 2: Input Answer
+
+        // FSRS DIFFICULTY! [mj]
+        double difficulty = 5.0;
+        double stability = 1.0;
+        int repetitions = 0;
+        int nextReview = 0;
 
         Card() = default;
         // Updated constructor to accept the type layout parameter
@@ -39,6 +45,12 @@ class Profile {
     public:
         string profileName;
         vector<Deck> decks;
+
+        // Statistics Fields [mj]
+        int totalStudied = 0;
+        int totalCorrect = 0;
+        int totalWrong = 0;
+        int streak = 0;
 
         Profile() = default;
         Profile(string profileName):
@@ -70,13 +82,23 @@ namespace nlohmann {
         static void to_json(json &j, const Card &c) {
             j = json {
                 {"front", c.front},
-                {"back", c.back}
+                {"back", c.back},
+                {"type", c.type},
+                {"difficulty", c.difficulty},
+                {"stability", c.stability},
+                {"repetitions", c.repetitions},
+                {"nextReview", c.nextReview}
             };
         } 
 
         static void from_json(const json &j, Card &c) {
             c.front = j.at("front").get<string>();
             c.back = j.at("back").get<string>();
+            c.type = j.at("type").get<int>();
+            c.difficulty = j.at("difficulty").get<double>();
+            c.stability = j.at("stability").get<double>();
+            c.repetitions = j.at("repetitions").get<int>();
+            c.nextReview = j.at("nextReview").get<int>();
         }
     };
 
@@ -106,13 +128,21 @@ namespace nlohmann {
         static void to_json(json &j, const Profile &c) {
             j = json {
                 {"profileName", c.profileName},
-                {"decks", c.decks}
+                {"decks", c.decks},
+                {"totalStudied", c.totalStudied},
+                {"totalCorrect", c.totalCorrect},
+                {"totalWrong", c.totalWrong},
+                {"streak", c.streak}
             };
         } 
 
         static void from_json(const json &j, Profile &c) {
             c.profileName = j.at("profileName").get<string>();
             c.decks = j.at("decks").get<vector<Deck>>();
+            c.totalStudied = j.at("totalStudied").get<int>();
+            c.totalCorrect = j.at("totalCorrect").get<int>();
+            c.totalWrong = j.at("totalWrong").get<int>();
+            c.streak = j.at("streak").get<int>();
         }
     };
 
