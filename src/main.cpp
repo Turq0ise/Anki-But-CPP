@@ -1041,10 +1041,27 @@ AppState handleViewCardTesting(unordered_map<string,Account> &allAccounts, Accou
         }
     }
 
-    std::cout << "\033[2J\033[1;1H\n";
+    vector<Card*> cards = getCardsFromDeck(*activeDeck);
+
+bool isReviewing = true;
+int cardIndex = 0;
+while(isReviewing && (cardIndex < cards.size())) {
+if(cardIndex != 0) cout << "\n...............................";
+
+std::cout << "\033[2J\033[1;1H\n";
     cout << "=== REVIEWING DECK: "<< deckNameString << " ===\n";
 
-    vector<Card*> cards = getCardsFromDeck(*activeDeck);
+ int cardType = cards[cardIndex]->.type;
+if(cardType == 0) {
+
+} else if(cardType == 1) {
+
+} else if(cardType == 2) {
+
+}
+}
+
+    
     for(size_t i = 0; i < cards.size(); ++i) {
         cout << cards[i]->front << "\n";
     }
