@@ -149,6 +149,48 @@ vector<Card*> getCardsFromDeck(Deck &baseDeck) {
     return cards;
 }
 
+void editCardWhileReview(unordered_map<string,Account> &allAccounts, Card* &selectedCard) {
+    int choice = -1;
+    while(choice != 0) {
+        std::cout << "\033[2J\033[1;1H\n"; 
+        cout << "===========================================\n";
+        cout << "  EDIT CARD (" << selectedCard->front << ")\n";
+        cout << "===========================================\n";
+        cout << "[1] Change Front\n";
+        cout << "[2] Change Back\n";
+        cout << "[0] Back to Review\n";
+
+        if(!(cin >> choice)) {
+            cout << "Please enter a valid input.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        string input;
+        if(choice == 1) {
+            std::cout << "\033[2J\033[1;1H\n";
+            cout << "--- CHANGE FRONT (" << selectedCard->front << ") ---\n\n";
+            cout << "New Front: ";
+            getline(cin >> ws, input); selectedCard->front = input;
+
+            cout << "\nPress Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        } else if(choice == 2) {
+            std::cout << "\033[2J\033[1;1H\n";
+            cout << "--- CHANGE BACK (" << selectedCard->back << ") ---\n\n";
+            cout << "New Back: ";
+            getline(cin >> ws, input); selectedCard->back = input;
+
+            cout << "\nPress Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+        saveToFile(allAccounts);
+    }
+}
+
 /*
     enum AppState Class:
         This contains the names of our so-called "pages" in our command line user interface
@@ -211,13 +253,35 @@ vector<Deck*> deckBreadcrumbs;
             std::cout << "\033[2J\033[1;1H\n";
 */
 
-AppState handleMainMenu() {
+AppState handleMainMenu(unordered_map<string, Account> &allAccounts) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "===== ANKI IN C++ =====\n";
-    cout << "[1] Login\n[2] Sign Up\n[0] Exit\n";
+    cout << "===========================================\n";
+    cout << "=============== ANKI IN C++ ===============\n";
+    cout << "===========================================\n\n";
+    cout << "[1] Login\n";
+    cout << "[2] Sign Up\n";
+    cout << "[0] Exit\n";
 
     char choice = getChoice();
-    if(choice == '1') return AppState::LOGIN;
+    if(choice == '1') {
+        if(!filesystem::exists("data.json")) {
+            cout << "No accounts found. Press any key to return...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+            return AppState::MAIN_MENU;
+        }
+
+        if(!filesystem::is_empty("data.json")) {
+            if(allAccounts.size() == 0) {
+                cout << "No accounts found. Press any key to return...";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cin.get();
+                return AppState::MAIN_MENU;
+            }
+        }
+
+        return AppState::LOGIN;
+    }
     if(choice == '2') return AppState::SIGNUP;
     if(choice == '0') return AppState::EXIT;
 
@@ -232,8 +296,14 @@ AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &
     }
 
     if(breadcrumbs.rbegin()[0] == AppState::DECK_DASHBOARD || breadcrumbs.rbegin()[0] == AppState::SHOW_SUBDECKS) {
-        deckBreadcrumbs.pop_back();
-        activeDeck = deckBreadcrumbs.rbegin()[0];
+        if(breadcrumbs.rbegin()[1] == AppState::CREATE_DECK) {
+            deckBreadcrumbs.clear();
+            activeDeck = nullptr;
+        } else {
+            deckBreadcrumbs.pop_back();
+            activeDeck = deckBreadcrumbs.rbegin()[0];
+        }
+        
     }
 
     if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
@@ -264,7 +334,10 @@ AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &
 
 AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== LOGIN ===\n";
+    cout << "===========================================\n";    
+    cout << "                   LOGIN\n";
+    cout << "===========================================\n\n";
+    
     cout << "Enter Username: ";
     string username, password;
     getline(cin >> ws, username);
@@ -289,7 +362,10 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
 
 AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== SIGNUP ===\n";
+    cout << "===========================================\n";    
+    cout << "                 SIGN UP\n";
+    cout << "===========================================\n\n";
+
     cout << "Enter Username: ";
     string username, password;
     getline(cin >> ws, username);
@@ -318,7 +394,9 @@ AppState handleSignup(unordered_map<string, Account> &allAccounts, Account* &act
 
 AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &activeUser, int &profilePage, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== PROFILES ===\n";
+    cout << "===========================================\n";    
+    cout << "                 PROFILES\n";
+    cout << "===========================================\n\n";
     cout << "= Page " << profilePage + 1 << " =\n";
 
     const int limitPerPage = 5;
@@ -370,7 +448,10 @@ AppState handleProfiles(unordered_map<string,Account> &allAccounts, Account* &ac
 
 AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CREATE PROFILE ===\n";
+    cout << "===========================================\n";    
+    cout << "               CREATE PROFILE\n";
+    cout << "===========================================\n\n";
+
     string profileName;
     cout << "Enter Profile Name: ";
     getline(cin >> ws, profileName);
@@ -414,7 +495,9 @@ AppState handleCreateProfile(unordered_map<string,Account> &allAccounts, Account
 
 AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &activeDeck) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== PROFILE DASHBOARD: " << activeProfile->profileName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  PROFILE DASHBOARD (" << activeProfile->profileName << ")\n";
+    cout << "===========================================\n\n";
 
     const int limitPerPage = 5;
     int decksVectorSize = activeProfile->decks.size();
@@ -474,7 +557,10 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
 
 AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== ACCOUNT SETTINGS: " << activeUser->accountName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  ACCOUNT SETTINGS (" << activeUser->accountName << ")\n";
+    cout << "===========================================\n\n";
+
     cout << "[1] Change Account Name\n[2] Change Password\n[3] Delete Account\n[4] Create Backup\n[0] Back\n";
 
     char choice = getChoice();
@@ -495,9 +581,11 @@ AppState handleAccountSettings(unordered_map<string,Account> &allAccounts, Accou
 
 AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CHANGE ACCOUNT NAME ===\n";
     string oldUsername = activeUser->accountName;
-    cout << "= Current Account Name: " << oldUsername << "\n";
+    cout << "===========================================\n";    
+    cout << "  CHANGE ACCOUNT NAME (" << oldUsername << ")\n";
+    cout << "===========================================\n";
+
     cout << "Enter New Username: ";
     string newUsername, password;
     getline(cin >> ws, newUsername);
@@ -529,8 +617,10 @@ AppState handleChangeAccountName(unordered_map<string,Account> &allAccounts, Acc
 
 AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CHANGE ACCOUNT PASSWORD ===\n";
-    cout << "= Current Account Name: " << activeUser->accountName << "\n\n";
+    cout << "===========================================\n";    
+    cout << "  CHANGE ACCOUNT PASSWORD (" << activeUser->accountName << ")\n";
+    cout << "===========================================\n";
+
     cout << "Enter password: ";
     string currentPassword, newPassword, confirmPassword;
     getline(cin >> ws, currentPassword);
@@ -566,8 +656,10 @@ AppState handleChangeAccountPassword(unordered_map<string,Account> &allAccounts,
 
 AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account* &activeUser) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== DELETE ACCOUNT ===\n";
-    cout << "= Current Account: " << activeUser->accountName << "\n\n";
+    cout << "===========================================\n";    
+    cout << "  DELETE ACCOUNT (" << activeUser->accountName << ")\n";
+    cout << "===========================================\n";
+
     char confirm;
     cout << "Are you sure you want to delete your account? [Y/n]: ";
     cin >> confirm;
@@ -591,7 +683,9 @@ AppState handleDeleteAccount(unordered_map<string,Account> &allAccounts, Account
 
 AppState handleSettings(vector<AppState> &breadcrumbs) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== SETTINGS ===\n\n";
+    cout << "===========================================\n";    
+    cout << "                SETTINGS\n";
+    cout << "===========================================\n\n";
 
     if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
 
@@ -617,7 +711,10 @@ AppState handleSettings(vector<AppState> &breadcrumbs) {
 
 AppState handleProfileSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== PROFILE SETTINGS: " << activeProfile->profileName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  PROFILE SETTINGS (" << activeProfile->profileName << ")\n";
+    cout << "===========================================\n\n";
+    
     cout << "[1] Change Profile Name\n[2] Delete Profile\n[0] Back\n";
 
     char choice = getChoice();
@@ -630,7 +727,10 @@ AppState handleProfileSettings(unordered_map<string,Account> &allAccounts, Accou
 
 AppState handleChangeProfileName(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CHANGE PROFILE NAME ===\n";
+    cout << "===========================================\n";    
+    cout << "  CHANGE PROFILE NAME (" << activeProfile->profileName << ")\n";
+    cout << "===========================================\n";
+
     string oldProfileName = activeProfile->profileName;
     cout << "= Current Profile Name: " << oldProfileName << "\n";
     cout << "Enter New Profile Name: ";
@@ -667,8 +767,10 @@ AppState handleChangeProfileName(unordered_map<string,Account> &allAccounts, Acc
 
 AppState handleDeleteProfile(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== DELETE PROFILE ===\n";
-    cout << "= Current Profile: " << activeProfile->profileName << "\n\n";
+    cout << "===========================================\n";    
+    cout << "  DELETE PROFILE (" << activeProfile->profileName << ")\n";
+    cout << "===========================================\n\n";
+
     char confirm;
     cout << "Are you sure you want to delete this profile? [Y/n]: ";
     cin >> confirm;
@@ -698,7 +800,9 @@ AppState handleDeleteProfile(unordered_map<string,Account> &allAccounts, Account
 
 AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== DECK DASHBOARD: " << activeDeck->deckName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  DECK DASHBOARD (" << activeDeck->deckName<< ")\n";
+    cout << "===========================================\n\n";
 
     cout << "Insert Deck Stats Here\n\n";
 
@@ -730,7 +834,9 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
 
 AppState handleShowSubDecks(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, int &deckPage, Deck* &activeDeck) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== SUBDECKS OF: " << activeDeck->deckName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  SUBDECKS (" << activeDeck->deckName << ")\n";
+    cout << "===========================================\n\n";
 
     const int limitPerPage = 5;
     int decksVectorSize = activeDeck->subDecks.size();
@@ -760,7 +866,7 @@ AppState handleShowSubDecks(unordered_map<string,Account> &allAccounts, Account*
     if(choice == '0') {
         activeUser = nullptr;
         return AppState::BACK;
-    } else if(choice == '9') { 
+    } else if(choice == '9') {
         return AppState::BACK;
     } else if(choice == '8') {
         return AppState::SETTINGS;
@@ -783,18 +889,29 @@ AppState handleShowSubDecks(unordered_map<string,Account> &allAccounts, Account*
 }
 
 AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
-    if (activeUser == nullptr) return AppState::MAIN_MENU;
-
     string fullDeckInput;
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CREATE DECK ===\n";
+    cout << "===========================================\n";    
+    cout << "               CREATE DECK\n";
+    cout << "===========================================\n";
+
+    vector<Deck*> addToDeckBreadcrumbs;
+    Deck* selectedDeck;
+    vector<Deck>* currentDeckVector = nullptr;
+    int startingLevel = 0;
     if (activeDeck != nullptr) {
         std::cout << "Creating a subdeck inside active deck: [ " << activeDeck->deckName << " ]\n";
-        std::cout << "Use '::' for deeper nesting (e.g., Vocab::Verbs)\n\n";
+        std::cout << "Use '::' for deeper nesting (e.g., Object-Oriented Programming::Inheritance)\n\n";
+
+        currentDeckVector = &(activeDeck->subDecks);
+        startingLevel = activeDeck->level + 1;
     } else {
         std::cout << "Creating a root-level deck.\n";
-        std::cout << "Use '::' for subdecks (e.g., Languages::Spanish::Vocab)\n\n";
+        std::cout << "Use '::' for subdecks (e.g., CPE103L::Object-Oriented Programming::Inheritance)\n\n";
+
+        currentDeckVector = &(activeProfile->decks);
     }
+
     cout << "Enter Deck Name: ";
     getline(cin >> ws, fullDeckInput);
 
@@ -804,16 +921,6 @@ AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &
         cout << "\nError: Invalid deck name layout.\n";
         cin.get();
         return AppState::CREATE_DECK;
-    }
-
-    vector<Deck>* currentDeckVector = nullptr;
-    int startingLevel = 0;
-
-    if(activeDeck == nullptr) {
-        currentDeckVector = &(activeProfile->decks);
-    } else {
-        currentDeckVector = &(activeDeck->subDecks);
-        startingLevel = activeDeck->level + 1;
     }
 
     for (size_t i = 0; i < deckNames.size(); ++i) {
@@ -839,26 +946,48 @@ AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &
         }
 
         if (!deckFound) {
-            Deck newLevelDeck(targetName, static_cast<int>(i));
+            Deck newLevelDeck(targetName, calculatedLevel);
             currentDeckVector->push_back(newLevelDeck);
             foundIndex = currentDeckVector->size() - 1;
         }
 
+        selectedDeck = &((*currentDeckVector)[foundIndex]);
+        addToDeckBreadcrumbs.push_back(selectedDeck);
+        
         currentDeckVector = &((*currentDeckVector)[foundIndex].subDecks);
     }
 
     saveToFile(allAccounts);
 
     cout << "\nDeck structure '" << fullDeckInput << "' processed successfully!\n";
-    cout << "Press Enter to return...";
-    cin.get();
+    cout << "[1] Open " << fullDeckInput << "\n";
+    cout << "[2] Create Another Deck\n";
+    cout << "[9] Back\n";
+    cout << "[0] Sign Out\n";
+    char choice = getChoice();
+
+    if(choice == '0') {
+        activeUser = nullptr;
+        return AppState::BACK;
+    } else if(choice == '9') {
+        return AppState::BACK;
+    } else if(choice == '2') {
+        return AppState::CREATE_DECK;
+    } else if(choice == '1') {
+        for(size_t i = 0; i < addToDeckBreadcrumbs.size() - 1; ++i) deckBreadcrumbs.push_back(addToDeckBreadcrumbs[i]);
+        activeDeck = selectedDeck;
+        return AppState::DECK_DASHBOARD;
+    }
 
     return AppState::BACK;
 }
 
 AppState handleDeckSettings(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== DECK SETTINGS: " << activeDeck->deckName << " ===\n\n";
+    cout << "===========================================\n";    
+    cout << "  DECK SETTINGS (" << activeDeck->deckName << ")\n";
+    cout << "===========================================\n\n";
+
     cout << "[1] Change Deck Name\n[2] Manage Cards\n[3] Delete Deck\n[9] Back\n[0] Sign Out\n";
 
     char choice = getChoice();
@@ -874,21 +1003,76 @@ AppState handleDeckSettings(unordered_map<string,Account> &allAccounts, Account*
     return AppState::DECK_SETTINGS;
 }
 
-// NOT YET WORKING, WILL GO BACK TO THIS
 AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== CHANGE DECK NAME ===\n";
     string oldDeckName = activeDeck->deckName;
-    cout << "= Current Deck Name: " << oldDeckName << "\n";
+    cout << "===========================================\n";    
+    cout << "  CHANGE DECK NAME (" << oldDeckName << ")\n";
+    cout << "===========================================\n\n";
+
+    int level = activeDeck->level;
+    vector<int> runningIndex;
+    for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
+        if(activeProfile->decks[i].deckName == deckBreadcrumbs[0]->deckName) {
+            runningIndex.push_back(i);
+            break;
+        }
+    }
+    Deck* runningDeck = &activeProfile->decks[runningIndex[0]];
+    vector<Deck> runningVectorDeck;
+
+    if(level == 0) {
+        runningVectorDeck = activeProfile->decks;
+    } else if(level >= 1) {
+        bool early = false;
+        for(size_t i = 1; i < deckBreadcrumbs.size() - 1; i++) {
+            for(size_t j = 0; runningDeck->subDecks.size(); j++) {
+                if(deckBreadcrumbs[i]->deckName == runningDeck->subDecks[j].deckName) {
+                    runningIndex.push_back(static_cast<int>(j));
+                    runningDeck = &runningDeck->subDecks[runningIndex[i]];
+                    early = true;
+                    break;
+                }
+            }
+            if(early) break;
+        }
+
+        runningVectorDeck = runningDeck->subDecks;
+    }
+
     cout << "Enter New Deck Name: ";
     string newDeckName;
     bool deckNameExists = true;
     getline(cin >> ws, newDeckName);
+
+    while(deckNameExists) {
+        deckNameExists = false;
+        for(size_t i = 0; i < runningVectorDeck.size(); ++i) {
+            if(newDeckName == runningVectorDeck[i].deckName) {
+                std::cout << "\033[2J\033[1;1H\n";
+                cout << "===========================================\n";    
+                cout << "  CHANGE DECK NAME (" << oldDeckName << ")\n";
+                cout << "===========================================\n";
+                cout << "Previous attempt already existed\n\n";
+                cout << "Enter New Deck Name: ";
+                getline(cin >> ws, newDeckName);
+                deckNameExists = true;
+                break;
+            }
+        }
+    }
+
+    activeDeck->deckName = newDeckName;
+    saveToFile(allAccounts);
+
+    cout << "Change Deck Name Successful, please press enter to continue";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    // cin.get();
+    return AppState::BACK;
 }
 
 // AppState traceDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck)
 
-// NOT YET WORKING, WILL GO BACK TO THIS
 AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     int level = activeDeck->level;
     vector<int> runningIndex;
@@ -901,8 +1085,10 @@ AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &
     Deck* runningDeck = &activeProfile->decks[runningIndex[0]];
 
     std::cout << "\033[2J\033[1;1H\n";
-    cout << "=== DELETE Deck ===\n";
-    cout << "= Current Deck: " << activeDeck->deckName << "\n\n";
+    cout << "===========================================\n";    
+    cout << "  DELETE DECK (" << activeDeck->deckName<< ")\n";
+    cout << "===========================================\n\n";
+
     cout << "Are you sure you want to delete this Deck and all its Sub Decks and Cards? [Y/n]: ";
     
     char confirm;
@@ -1121,7 +1307,8 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
             } else if(choice == '9') { 
                 return AppState::BACK;
             } else if(choice == '8') {
-                // return AppState::EDIT_CARD;
+                editCardWhileReview(allAccounts, cards[reviewIndex]);
+                return AppState::REVIEW_CARDS;
             } else if(choice == '1') {
                 cout << "\n" << cards[reviewIndex]->back << "\n";
             } else {
@@ -1150,30 +1337,30 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
 
         // rating would go here, input buffer na lang in the meantime
         /*
-       cout << "Press any key to proceed to the next card...";
+        cout << "Press any key to proceed to the next card...";
         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         cin.get();
         
         */
-       cout << "Did you get this card correct? [Y/n]: ";
-       char grade;
-       cin >> grade;
+        cout << "Did you get this card correct? [Y/n]: ";
+        char grade;
+        cin >> grade;
 
-       // Update Stat
-       activeProfile->totalStudied++;
-       if (grade == 'Y' || grade == 'y') {
-           activeProfile->totalCorrect++;
-       } else {
-            activeProfile->totalWrong++;
-       }
+        // Update Stat
+        activeProfile->totalStudied++;
+        if (grade == 'Y' || grade == 'y') {
+            activeProfile->totalCorrect++;
+        } else {
+                activeProfile->totalWrong++;
+        }
 
-       // Save to data.json
-       saveToFile(allAccounts);
+        // Save to data.json
+        saveToFile(allAccounts);
 
-       cout << "Press Enter to proceed to the next card...";
+        cout << "Press Enter to proceed to the next card...";
 
-       cin.ignore(numeric_limits<streamsize>::max(), '\n');
-       cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
 
         reviewIndex++;
     }
@@ -1231,7 +1418,7 @@ int main() {
         cout << "\n-------------------------------------------";
         switch(currentState) {
             case AppState::MAIN_MENU:
-                currentState = handleMainMenu();
+                currentState = handleMainMenu(allAccounts);
                 activeUser = nullptr;
                 activeProfile = nullptr;
                 break;
