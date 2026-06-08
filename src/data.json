@@ -1,51 +1,7 @@
 {
-    "Account": {
-        "accountName": "Account",
-        "password": "1234",
-        "profiles": [
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Default Profile"
-            },
-            {
-                "decks": [
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "Default Deck",
-                        "level": 0,
-                        "subDecks": []
-                    },
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "A",
-                        "level": 0,
-                        "subDecks": []
-                    },
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "B",
-                        "level": 0,
-                        "subDecks": []
-                    }
-                ],
-                "profileName": "Science"
-            }
-        ]
-    },
     "Test Account": {
         "accountName": "Test Account",
-        "password": "Password",
+        "password": "password",
         "profiles": [
             {
                 "decks": [
@@ -53,23 +9,39 @@
                         "cards": [
                             {
                                 "back": "Answer 1",
-                                "front": "Question 1"
-                            },
-                            {
-                                "back": "Answer 2",
-                                "front": "Question 2"
+                                "difficulty": 5.0,
+                                "front": "QUESTION 1",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 0
                             },
                             {
                                 "back": "Test Answer Again",
-                                "front": "Test Question Again"
+                                "difficulty": 5.0,
+                                "front": "Test Question Again",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 0
                             },
                             {
-                                "back": "A",
-                                "front": "Q"
+                                "back": "Reversed Answer",
+                                "difficulty": 5.0,
+                                "front": "Reversed Question",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 1
                             },
                             {
-                                "back": "Hmm",
-                                "front": "Hmm"
+                                "back": "Reversed Question",
+                                "difficulty": 5.0,
+                                "front": "Reversed Answer",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 1
                             }
                         ],
                         "cardsIncSub": [],
@@ -80,7 +52,12 @@
                                 "cards": [
                                     {
                                         "back": "Test Answer",
-                                        "front": "Test Question"
+                                        "difficulty": 5.0,
+                                        "front": "Test Question",
+                                        "nextReview": 0,
+                                        "repetitions": 0,
+                                        "stability": 1.0,
+                                        "type": 2
                                     }
                                 ],
                                 "cardsIncSub": [],
@@ -91,7 +68,7 @@
                                         "cards": [],
                                         "cardsIncSub": [],
                                         "deckName": "TestTest",
-                                        "level": 0,
+                                        "level": 2,
                                         "subDecks": []
                                     }
                                 ]
@@ -123,7 +100,7 @@
                                 "cards": [],
                                 "cardsIncSub": [],
                                 "deckName": "Test Deck",
-                                "level": 0,
+                                "level": 1,
                                 "subDecks": []
                             }
                         ]
@@ -132,11 +109,12 @@
                         "cards": [
                             {
                                 "back": "Answer",
-                                "front": "Question"
-                            },
-                            {
-                                "back": "Answer",
-                                "front": "Question"
+                                "difficulty": 5.0,
+                                "front": "Question",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 2
                             }
                         ],
                         "cardsIncSub": [],
@@ -145,7 +123,11 @@
                         "subDecks": []
                     }
                 ],
-                "profileName": "Default Profile"
+                "profileName": "Default Profile",
+                "streak": 0,
+                "totalCorrect": 0,
+                "totalStudied": 0,
+                "totalWrong": 0
             },
             {
                 "decks": [
@@ -153,7 +135,12 @@
                         "cards": [
                             {
                                 "back": "Answer",
-                                "front": "Question"
+                                "difficulty": 5.0,
+                                "front": "Question",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 0
                             }
                         ],
                         "cardsIncSub": [],
@@ -162,7 +149,11 @@
                         "subDecks": []
                     }
                 ],
-                "profileName": "Test Profile"
+                "profileName": "Test Profile",
+                "streak": 0,
+                "totalCorrect": 0,
+                "totalStudied": 0,
+                "totalWrong": 0
             },
             {
                 "decks": [
@@ -174,7 +165,11 @@
                         "subDecks": []
                     }
                 ],
-                "profileName": "Test Profile 2"
+                "profileName": "Test Profile 2",
+                "streak": 0,
+                "totalCorrect": 0,
+                "totalStudied": 0,
+                "totalWrong": 0
             }
         ]
     },
@@ -192,7 +187,11 @@
                         "subDecks": []
                     }
                 ],
-                "profileName": "Default Profile"
+                "profileName": "Default Profile",
+                "streak": 0,
+                "totalCorrect": 0,
+                "totalStudied": 0,
+                "totalWrong": 0
             }
         ]
     }
