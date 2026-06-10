@@ -54,6 +54,8 @@ class Profile {
         int totalWrong = 0;
         int streak = 0;
 
+        vector<string> tags;
+
         Profile() = default;
         Profile(string profileName):
             profileName(profileName) {
@@ -89,7 +91,7 @@ namespace nlohmann {
                 {"difficulty", c.difficulty},
                 {"stability", c.stability},
                 {"repetitions", c.repetitions},
-                {"nextReview", c.nextReview}
+                {"nextReview", c.nextReview},
                 {"tags", c.tags},
                 {"flagged", c.flagged}
             };
@@ -138,7 +140,8 @@ namespace nlohmann {
                 {"totalStudied", c.totalStudied},
                 {"totalCorrect", c.totalCorrect},
                 {"totalWrong", c.totalWrong},
-                {"streak", c.streak}
+                {"streak", c.streak},
+                {"tags", c.tags}
             };
         } 
 
@@ -149,6 +152,7 @@ namespace nlohmann {
             c.totalCorrect = j.at("totalCorrect").get<int>();
             c.totalWrong = j.at("totalWrong").get<int>();
             c.streak = j.at("streak").get<int>();
+            c.tags = j.at("tags").get<vector<string>>();
         }
     };
 
