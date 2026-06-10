@@ -1067,11 +1067,8 @@ AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Accoun
 
     cout << "Change Deck Name Successful, please press enter to continue";
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    // cin.get();
     return AppState::BACK;
 }
-
-// AppState traceDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck)
 
 AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     int level = activeDeck->level;

@@ -113,7 +113,26 @@
                         ]
                     },
                     {
-                        "cards": [],
+                        "cards": [
+                            {
+                                "back": "Q",
+                                "difficulty": 5.0,
+                                "front": "A",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 1
+                            },
+                            {
+                                "back": "A",
+                                "difficulty": 5.0,
+                                "front": "Q",
+                                "nextReview": 0,
+                                "repetitions": 0,
+                                "stability": 1.0,
+                                "type": 1
+                            }
+                        ],
                         "cardsIncSub": [],
                         "deckName": "Test",
                         "level": 0,
