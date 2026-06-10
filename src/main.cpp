@@ -149,6 +149,25 @@ vector<Card*> getCardsFromDeck(Deck &baseDeck) {
     return cards;
 }
 
+vector<Card*> getCardsFromDeckByTag(Deck &baseDeck, string tagName) {
+    vector<Card*> cards;
+    
+    for(size_t i = 0; i < baseDeck.cards.size(); ++i) {
+        for(size_t j = 0; j < baseDeck.cards[i].tags.size(); ++j) {
+            if(baseDeck.cards[i].tags[j] == tagName){
+                cards.push_back(&(baseDeck.cards[i]));
+                break;
+            } 
+        }
+    }
+
+    for(size_t i = 0; i < baseDeck.subDecks.size(); ++i) {
+        vector<Card*> cardsFromSubDecks = getCardsFromDeck(baseDeck.subDecks[i]);
+        cards.insert(cards.end(), cardsFromSubDecks.begin(), cardsFromSubDecks.end());
+    }
+    return cards;
+}
+
 void editCardWhileReview(unordered_map<string,Account> &allAccounts, Card* &selectedCard) {
     int choice = -1;
     while(choice != 0) {
@@ -225,6 +244,10 @@ enum class AppState {
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
     REVIEW_CARDS,
+    TAGS,
+    TAG_DASHBOARD,
+    CREATE_TAG,
+    ASSIGN_TAG,
     
     BACK,
     EXIT
@@ -1067,11 +1090,8 @@ AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Accoun
 
     cout << "Change Deck Name Successful, please press enter to continue";
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    // cin.get();
     return AppState::BACK;
 }
-
-// AppState traceDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck)
 
 AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
     int level = activeDeck->level;
@@ -1167,7 +1187,7 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
         cout << "[6] Toggle Flag\n";
         cout << "[7] Search by Tag\n";
         cout << "[8] Show Flagged Cards\n";
-        cout << "[0] Exit back to Dashboard\n";
+        cout << "[0] Exit back to Deck Dashboard\n";
         cout << "Choice: ";
         
         if (!(cin >> choice)) {
@@ -1224,12 +1244,13 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
                     cout << "[" << i + 1 << "] Template Configuration: " << typeLabel << "\n"
                          << "    Front Field: " << activeDeck->cards[i].front << "\n"
                          << "    Back Field:  " << activeDeck->cards[i].back << "\n"
-                         << "-------------------------------------------\n";
+                         << "    Flagged: " << (activeDeck->cards[i].flagged ? "Yes" : "No") << "\n";
                 
-                    cout << "    Flagged: " << (activeDeck->cards[i].flagged ? "Yes" : "No") << "\n";
                     cout << "    Tags: ";
                     for (const auto& tag : activeDeck->cards[i].tags) {
                         cout << tag << " ";
+                    }
+                    cout << "\n-------------------------------------------\n" ;
                 }
                     cout << "\n";
                     cout << "===========================================\n";
@@ -1259,8 +1280,8 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
                 cout << "Invalid index selection bound context!\n";
             }
             cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Press Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cin.get();
         }
         // --- DELETE ---
@@ -1284,36 +1305,7 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
             cin.get();
         }
         else if(choice == 5) {
-            int index;
-            cout << "\nCard Index: ";
-            cin >> index;
-
-            if(index < 1 || index > activeDeck->cards.size())
-                continue;
-            index--;
-
-            cout << "\n[1] Add Tag\n";
-            cout << "[2] Remove Tag\n";
-
-            int tagChoice;
-            cin >> tagChoice;
-
-            if(tagChoice == 1) {
-                string tag;
-                cout << "Tag Name: ";
-                getline(cin >> ws, tag);
-                activeDeck->cards[index].tags.push_back(tag);
-
-            }
-            else if(tagChoice == 2) {
-                string tag;
-                cout << "Tag to Remove: ";
-                getline(cin >> ws, tag);
-
-                auto &tags = activeDeck->cards[index].tags;
-                tags.erase(remove(tags.begin(), tags.end(), tag), tags.end());
-            }
-            saveToFile(allAccounts);
+            return AppState::TAGS;
         }
         else if(choice == 6) {
             int index;
@@ -1357,7 +1349,270 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
     return AppState::BACK; 
 }
 
-AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
+AppState handleTags(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &tagsPage, string &activeTag) {
+    std::cout << "\033[2J\033[1;1H\n"; 
+    cout << "===========================================\n";
+    cout << "  MANAGING TAGS (" << activeProfile->profileName << ")\n";
+    cout << "===========================================\n\n";
+
+    const int limitPerPage = 5;
+    if(activeProfile->tags.size() != 0) {
+        int tagsVectorSize = activeProfile->tags.size();
+        int runningSize = (tagsVectorSize <= limitPerPage) ? tagsVectorSize : ((tagsPage + 1) * limitPerPage) - ((tagsVectorSize / limitPerPage) >= (tagsPage + 1) ? 0 : limitPerPage - (tagsVectorSize % limitPerPage));
+        for(int i = (5 * tagsPage); i < runningSize; i++) {
+            int index = (i + 1) - (tagsPage * limitPerPage);
+            cout << "[" << index << "]: " << activeProfile->tags[i] << "\n";
+        }
+
+        cout << "\n";
+
+        int numberOfPages = (tagsVectorSize / limitPerPage) + ( (tagsVectorSize % limitPerPage) > 0 ? 1 : 0);
+        if(numberOfPages > 1) {
+            if(tagsPage == 0) {
+                cout << "[>] Next Page";
+            } else if(tagsPage > 0 && tagsPage < (numberOfPages - 1)) {
+                cout << "[<] Previous Page  |  Next Page [>]";
+            } else if(tagsPage == (numberOfPages - 1)) {
+                cout << "[<] Previous Page";
+            } 
+            cout << "\n";
+        }
+    }
+
+    cout << "[8] Create\n";
+    cout << "[9] Back\n";
+    cout << "[0] Sign Out\n";
+
+    char choice = getChoice();
+    if(choice == '0') {
+        activeUser = nullptr;
+        return AppState::BACK;
+    } else if(choice == '9') {
+        return AppState::BACK;
+    } else if(choice == '8') {
+        return AppState::CREATE_TAG;
+    }
+
+    if(activeProfile->tags.size() != 0) {
+        int choiceToInt = choice - '0';
+        if(choiceToInt > 0 && choiceToInt <=5) {
+            activeTag = activeProfile->tags[(choiceToInt - 1) + (tagsPage * limitPerPage)];
+            return AppState::TAG_DASHBOARD;
+        }
+    }
+
+    return AppState::TAGS;
+}
+
+AppState handleTagDashboard(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, string &activeTag) {
+
+    int choice = -1;
+    while(choice != 9) {
+        std::cout << "\033[2J\033[1;1H\n"; 
+        cout << "===========================================\n";
+        cout << "  TAG DASHBOARD (" << activeTag << ")\n";
+        cout << "===========================================\n\n";
+
+        cout << "[1] Rename\n";
+        cout << "[2] Delete\n";
+        cout << "[9] Back\n";
+        cout << "[0] Sign Out\n";
+
+        if (!(cin >> choice)) {
+            cout << "Please enter a valid number.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        if(choice == 0) {
+            activeUser = nullptr;
+            return AppState::BACK;
+        } else if(choice == 1) {
+            std::cout << "\033[2J\033[1;1H\n";
+            cout << "--- RENAME TAG: " << activeTag << " ---\n";
+            string newTagName;
+            bool tagNameExists = true;
+            cout << "New Tag Name: ";
+            getline(cin >> ws, newTagName);
+            while(tagNameExists) {
+                bool test = false;
+                for(size_t i = 0; i < activeProfile->tags.size(); ++i) {
+                    if(activeProfile->tags[i] == newTagName) {
+                        test = true;
+                        tagNameExists = true;
+                        cout << newTagName << " already exists, please try again\n";
+                        getline(cin >> ws, newTagName);
+
+                    }
+                }
+                if(test == false) break;
+            }
+
+            vector<Card*> cardsWithTag;
+            for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
+                vector<Card*> addition = getCardsFromDeckByTag(activeProfile->decks[i], activeTag);
+                cardsWithTag.insert(cardsWithTag.end(), addition.begin(), addition.end());
+            }
+
+            for(size_t i = 0; i < cardsWithTag.size(); ++i) {
+                for(size_t j = 0; j < cardsWithTag[i]->tags.size(); ++j) {
+                    if(cardsWithTag[i]->tags[j] == activeTag) {
+                        cardsWithTag[i]->tags[j] = newTagName;
+                        break;
+                    }
+                }
+            }
+
+            for(size_t i = 0; i < activeProfile->tags.size(); ++i) {
+                if(activeProfile->tags[i] == activeTag) {
+                    activeProfile->tags[i] = newTagName;
+                    break;
+                }
+            }
+            
+            saveToFile(allAccounts);
+            activeTag = newTagName;
+            cout << "Rename Successful, Press Enter to go back...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        } else if(choice == 2) {
+            std::cout << "\033[2J\033[1;1H\n";
+            cout << "--- DELETE TAG: " << activeTag << " ---\nPlease type the tag name enclosed in square brackets to confirm tag deletion\n: ";
+            string confirmText;
+            getline(cin >> ws, confirmText);
+
+            if(confirmText == "[" + activeTag + "]") {
+                vector<Card*> cardsWithTag;
+                for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
+                    vector<Card*> addition = getCardsFromDeckByTag(activeProfile->decks[i], activeTag);
+                    cardsWithTag.insert(cardsWithTag.end(), addition.begin(), addition.end());
+                }
+
+                for(size_t i = 0; i < cardsWithTag.size(); ++i) {
+                    for(size_t j = 0; j < cardsWithTag[i]->tags.size(); ++j) {
+                        if(cardsWithTag[i]->tags[j] == activeTag) {
+                            cardsWithTag[i]->tags.erase(cardsWithTag[i]->tags.begin() + j);
+                            break;
+                        }
+                    }
+                }
+
+                for(size_t i = 0; i < activeProfile->tags.size(); ++i) {
+                    if(activeProfile->tags[i] == activeTag) {
+                        activeProfile->tags.erase(activeProfile->tags.begin() + i);
+                        break;
+                    }
+                }
+
+                cout << "Delete tag Successful, Press Enter to go back...";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cin.get();
+
+                saveToFile(allAccounts);
+                activeTag = "";
+                return AppState::BACK;
+            } else {
+                cout << "Delete tag Unsuccessful, Press Enter to go back...";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cin.get();
+            }
+        }
+    } 
+    return AppState::BACK;
+}
+
+AppState handleCreateTag(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck) {
+    std::cout << "\033[2J\033[1;1H\n"; 
+    cout << "===========================================\n";
+    cout << "                CREATE TAG\n";
+    cout << "===========================================\n\nTag name: ";
+
+    string tagName;
+    bool tagNameExists = true;
+    getline(cin >> ws, tagName);
+    while(tagNameExists) {
+        bool test = false;
+        for(size_t i = 0; i < activeProfile->tags.size(); ++i) {
+            if(activeProfile->tags[i] == tagName) {
+                test = true;
+                tagNameExists = true;
+                cout << tagName << " already exists, please try again\n";
+                getline(cin >> ws, tagName);
+            }
+        }
+        if(test == false) break;
+    }
+    activeProfile->tags.push_back(tagName);
+    saveToFile(allAccounts);
+
+    cout << "Tag Creation successful, Press Enter to go back...";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
+
+    return AppState::BACK;
+}
+
+AppState handleAssignTag(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int tagsPage, Card* &activeCard) {
+    std::cout << "\033[2J\033[1;1H\n"; 
+    cout << "===========================================\n";
+    cout << "                ASSIGN TAG\n";
+    cout << "===========================================\n\n";
+
+    const int limitPerPage = 5;
+    if(activeProfile->tags.size() != 0) {
+        int tagsVectorSize = activeProfile->tags.size();
+        int runningSize = (tagsVectorSize <= limitPerPage) ? tagsVectorSize : ((tagsPage + 1) * limitPerPage) - ((tagsVectorSize / limitPerPage) >= (tagsPage + 1) ? 0 : limitPerPage - (tagsVectorSize % limitPerPage));
+        for(int i = (5 * tagsPage); i < runningSize; i++) {
+            int index = (i + 1) - (tagsPage * limitPerPage);
+            cout << "[" << index << "]: " << activeProfile->tags[i] << "\n";
+        }
+
+        cout << "\n";
+
+        int numberOfPages = (tagsVectorSize / limitPerPage) + ( (tagsVectorSize % limitPerPage) > 0 ? 1 : 0);
+        if(numberOfPages > 1) {
+            if(tagsPage == 0) {
+                cout << "[>] Next Page";
+            } else if(tagsPage > 0 && tagsPage < (numberOfPages - 1)) {
+                cout << "[<] Previous Page  |  Next Page [>]";
+            } else if(tagsPage == (numberOfPages - 1)) {
+                cout << "[<] Previous Page";
+            } 
+            cout << "\n";
+        }
+    }
+
+    cout << "[8] Create\n";
+    cout << "[9] Back\n";
+    cout << "[0] Sign Out\n";
+
+    char choice = getChoice();
+    if(choice == '0') {
+        activeUser = nullptr;
+        return AppState::BACK;
+    } else if(choice == '9') {
+        return AppState::BACK;
+    } else if(choice == '8') {
+        return AppState::CREATE_TAG;
+    }
+
+    if(activeProfile->tags.size() != 0) {
+        int choiceToInt = choice - '0';
+        if(choiceToInt > 0 && choiceToInt <=5) {
+            activeCard->tags.push_back(activeProfile->tags[(choiceToInt - 1) + (tagsPage * limitPerPage)]);
+            saveToFile(allAccounts);
+
+            cout << "Tag Assignment successful, Press Enter to go back...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+    }
+
+    return AppState::BACK;
+}
+
+AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex, Card* &activeCard) {
     string deckNameString;
     for(size_t i = 0; i < deckBreadcrumbs.size(); ++i) {
         if(i == 0) {
@@ -1376,15 +1631,22 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         std::cout << "\033[2J\033[1;1H\n";
         cout << "=== REVIEWING DECK: "<< deckNameString << " ===\n\n";
         cout << cards[reviewIndex]->front << "\n\n";
+        activeCard = cards[reviewIndex];
 
         int cardType = cards[reviewIndex]->type;
         if(cardType == 0 || cardType == 1) {
-            cout << "[1] Show Answer\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+            cout << "[1] Show Answer\n[6] Assign Tag\n[7] Toggle Flag\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
 
             char choice = getChoice();
             if(choice == '0') {
                 activeUser = nullptr;
                 return AppState::BACK;
+            } else if(choice == '6') {
+                return AppState::ASSIGN_TAG;
+            } else if(choice == '7') {
+                cards[reviewIndex]->flagged = !(cards[reviewIndex]->flagged);
+                saveToFile(allAccounts);
+                return AppState::REVIEW_CARDS;
             } else if(choice == '9') { 
                 return AppState::BACK;
             } else if(choice == '8') {
@@ -1397,16 +1659,23 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
             }
         } else if(cardType == 2) {
             cout << "To answer the flashcard, type your answer enclosed in square brackets\n\n";
-            cout << "[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+            cout << "[6] Assign Tag\n[7] Flag Card\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
 
             cout << ": "; string input; getline(cin >> ws, input);
             if(input == "0") {
                 activeUser = nullptr;
                 return AppState::BACK;
+            } else if(input == "6") {
+                return AppState::ASSIGN_TAG;
+            } else if(input == "7") {
+                cards[reviewIndex]->flagged = !(cards[reviewIndex]->flagged);
+                saveToFile(allAccounts);
+                return AppState::REVIEW_CARDS;
             } else if(input == "9") { 
                 return AppState::BACK;
             } else if(input == "8") {
-                // return AppState::EDIT_CARD;
+                editCardWhileReview(allAccounts, cards[reviewIndex]);
+                return AppState::REVIEW_CARDS;
             } else if((input.front() == '[') && (input.back() == ']')) {
                 if(input == "[" + cards[reviewIndex]->back + "]") {
                     cout << "\ntomoh\n";
@@ -1451,6 +1720,7 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         cout << cards[i]->front << "\n";
     }
 
+    activeCard = nullptr;
     cout << "Press Enter to return...";
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cin.get();
@@ -1467,9 +1737,12 @@ int main() {
     Account* activeUser = nullptr;
     Profile* activeProfile = nullptr;
     Deck* activeDeck = nullptr;
+    Card* activeCard = nullptr;
+    string activeTag = "";
     int profilePage = 0;
     int deckPage = 0;
     int reviewIndex = 0;
+    int tagsPage = 0;
 
     /*
         The code below connects the AppStates to their respective handle Functions
@@ -1567,7 +1840,19 @@ int main() {
                 currentState = handleCardManagement(allAccounts, activeDeck);
                 break;
             case AppState::REVIEW_CARDS:
-                currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
+                currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex, activeCard);
+                break;
+            case AppState::TAGS:
+                currentState = handleTags(allAccounts, activeUser, activeProfile, activeDeck, tagsPage, activeTag);
+                break;
+            case AppState::TAG_DASHBOARD:
+                currentState = handleTagDashboard(allAccounts, activeUser, activeProfile, activeDeck, activeTag);
+                break;
+            case AppState::CREATE_TAG:
+                currentState = handleCreateTag(allAccounts, activeUser, activeProfile, activeDeck);
+                break;
+            case AppState::ASSIGN_TAG:
+                currentState = handleAssignTag(allAccounts, activeUser, activeProfile, activeDeck, tagsPage, activeCard);
                 break;
         }
     }
