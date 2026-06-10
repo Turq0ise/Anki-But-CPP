@@ -87,7 +87,7 @@ char getChoice() {
 
 /*
     saveToFile Function:
-        Handles saving the user data into the json file
+        Handles saving the user data into the json file 
         Takes only one parameter:  
             Reference to the instance of an accounts class
         Since our data structure nests the cards, decks, and profiles all under the accounts, triggering the class to json conversion on the account class would subsequently trigger the class to json conversions of the profile, deck, and card classes.
@@ -1163,6 +1163,10 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
         cout << "[2] Read (View Existing Cards)\n";
         cout << "[3] Update (Edit Card Content)\n";
         cout << "[4] Delete (Remove Card From Deck Collection)\n";
+        cout << "[5] Manage Tags\n";
+        cout << "[6] Toggle Flag\n";
+        cout << "[7] Search by Tag\n";
+        cout << "[8] Show Flagged Cards\n";
         cout << "[0] Exit back to Dashboard\n";
         cout << "Choice: ";
         
@@ -1221,7 +1225,14 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
                          << "    Front Field: " << activeDeck->cards[i].front << "\n"
                          << "    Back Field:  " << activeDeck->cards[i].back << "\n"
                          << "-------------------------------------------\n";
+                
+                    cout << "    Flagged: " << (activeDeck->cards[i].flagged ? "Yes" : "No") << "\n";
+                    cout << "    Tags: ";
+                    for (const auto& tag : activeDeck->cards[i].tags) {
+                        cout << tag << " ";
                 }
+                    cout << "\n";
+                    cout << "===========================================\n";
             }
             cout << "Press Enter to go back to control screen...";
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -1270,6 +1281,76 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
             cin.clear();
             // cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Press Enter to continue...";
+            cin.get();
+        }
+        else if(choice == 5) {
+            int index;
+            cout << "\nCard Index: ";
+            cin >> index;
+
+            if(index < 1 || index > activeDeck->cards.size())
+                continue;
+            index--;
+
+            cout << "\n[1] Add Tag\n";
+            cout << "[2] Remove Tag\n";
+
+            int tagChoice;
+            cin >> tagChoice;
+
+            if(tagChoice == 1) {
+                string tag;
+                cout << "Tag Name: ";
+                getline(cin >> ws, tag);
+                activeDeck->cards[index].tags.push_back(tag);
+
+            }
+            else if(tagChoice == 2) {
+                string tag;
+                cout << "Tag to Remove: ";
+                getline(cin >> ws, tag);
+
+                auto &tags = activeDeck->cards[index].tags;
+                tags.erase(remove(tags.begin(), tags.end(), tag), tags.end());
+            }
+            saveToFile(allAccounts);
+        }
+        else if(choice == 6) {
+            int index;
+            cout << "Card Index: ";
+            cin >> index;
+            if(index < 1 || index > activeDeck->cards.size())
+                continue;
+            index--;
+
+            activeDeck->cards[index].flagged = !activeDeck->cards[index].flagged;
+            saveToFile(allAccounts);
+
+            cout << "Flag status changed.\n";
+        }
+        else if(choice == 7) {
+            string searchTag;
+            cout << "Tag: ";
+            getline(cin >> ws, searchTag);
+
+            cout << "\n=== RESULTS ===\n";
+            for(const auto &card : activeDeck->cards) {
+                if(find(card.tags.begin(), card.tags.end(), searchTag) != card.tags.end()) {
+                    cout << "Front: " << card.front << "\n";
+                    cout << "Back: " << card.back  << "\n\n";
+                }
+            }
+            cin.get();
+        }
+        else if(choice == 8) {
+            cout << "\n=== FLAGGED CARDS ===\n";
+            for(const auto &card : activeDeck->cards) {
+                if(card.flagged) {
+                    cout << "Front: " << card.front << "\n";
+                    cout << "Back: " << card.back  << "\n\n";
+                }
+            }
+            cin.ignore();
             cin.get();
         }
     }
