@@ -227,7 +227,7 @@ enum class AppState {
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
     REVIEW_CARDS,
-    CUSTOM_STUDY_SETTINGS,
+    CUSTOM_STUDY,
 
     BACK,
     EXIT
@@ -830,7 +830,6 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
         return AppState::CREATE_DECK;
     } else if(choice == '5') {
     return AppState::CUSTOM_STUDY;
-    } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
     } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
         return AppState::SHOW_SUBDECKS;
     }
@@ -1727,6 +1726,9 @@ int main() {
                 break;
             case AppState::REVIEW_CARDS:
                 currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
+                break;
+            case AppState::CUSTOM_STUDY:
+                currentState = handleCustomStudy(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
                 break;
         }
     }
