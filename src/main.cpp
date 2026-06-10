@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
@@ -225,7 +227,8 @@ enum class AppState {
     SHOW_SUBDECKS,
     CARD_MANAGEMENT,
     REVIEW_CARDS,
-    
+    CUSTOM_STUDY_SETTINGS,
+
     BACK,
     EXIT
 };
@@ -806,7 +809,7 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
 
     cout << "Insert Deck Stats Here\n\n";
 
-    cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n";
+    cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n[5] Custom Study\n";
     if(activeDeck->subDecks.size() > 0) cout << "[4] Show Subdecks\n";
     cout << "[8] Settings\n[9] Back\n[0] Sign Out\n";
 
@@ -825,6 +828,9 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
         return AppState::CARD_MANAGEMENT;
     } else if(choice == '3') {
         return AppState::CREATE_DECK;
+    } else if(choice == '5') {
+    return AppState::CUSTOM_STUDY;
+    } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
     } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
         return AppState::SHOW_SUBDECKS;
     }
@@ -1357,6 +1363,159 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
     return AppState::BACK; 
 }
 
+AppState handleCustomStudy(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
+    std::cout << "\033[2J\033[1;1H\n";
+    cout << "=== CUSTOM STUDY SETTINGS: " << activeDeck->deckName << " ===\n\n";
+
+    vector<Card*> allCards = getCardsFromDeck(*activeDeck);
+    int totalCards = allCards.size();
+
+    if(totalCards == 0) {
+        cout << "This deck has no cards to study!\n";
+        cout << "Press Enter to go back...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        return AppState::BACK;
+    }
+
+    // --- SETTING 1: Card Limit ---
+    int cardLimit = totalCards;
+    cout << "How many cards do you want to study? (1 - " << totalCards << ", or 0 for all)\n";
+    cout << ": ";
+    while(!(cin >> cardLimit) || cardLimit < 0 || cardLimit > totalCards) {
+        cin.clear();
+        cin.ignore(1000, '\n');
+        cout << "Invalid input! Enter a number between 0 and " << totalCards << ": ";
+    }
+    if(cardLimit == 0) cardLimit = totalCards;
+
+    // --- SETTING 2: Card Order ---
+    cout << "\nCard Order:\n[1] Sequential (default order)\n[2] Shuffled\n";
+    char orderChoice = getChoice();
+    while(orderChoice != '1' && orderChoice != '2') {
+        cout << "Invalid input! Please choose [1] or [2]: ";
+        orderChoice = getChoice();
+    }
+
+    // --- SETTING 3: Card Type Filter ---
+    cout << "\nCard Type Filter:\n[1] All Types\n[2] Regular Cards Only\n[3] Reversible Cards Only\n[4] Input Answer Cards Only\n";
+    char typeChoice = getChoice();
+    while(typeChoice != '1' && typeChoice != '2' && typeChoice != '3' && typeChoice != '4') {
+        cout << "Invalid input! Please choose [1] to [4]: ";
+        typeChoice = getChoice();
+    }
+
+    // --- Apply filters ---
+    vector<Card*> filteredCards;
+    for(Card* card : allCards) {
+        if(typeChoice == '1') {
+            filteredCards.push_back(card);
+        } else if(typeChoice == '2' && card->type == 0) {
+            filteredCards.push_back(card);
+        } else if(typeChoice == '3' && card->type == 1) {
+            filteredCards.push_back(card);
+        } else if(typeChoice == '4' && card->type == 2) {
+            filteredCards.push_back(card);
+        }
+    }
+
+    if(filteredCards.empty()) {
+        cout << "\nNo cards match the selected filter in this deck.\n";
+        cout << "Press Enter to go back...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        return AppState::BACK;
+    }
+
+    // Apply shuffle if chosen
+    if(orderChoice == '2') {
+        srand(static_cast<unsigned int>(time(nullptr)));
+        for(int i = filteredCards.size() - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            swap(filteredCards[i], filteredCards[j]);
+        }
+    }
+
+    // Trim to card limit
+    if((int)filteredCards.size() > cardLimit) {
+        filteredCards.resize(cardLimit);
+    }
+
+    // --- Summary before starting ---
+    std::cout << "\033[2J\033[1;1H\n";
+    cout << "=== CUSTOM STUDY READY ===\n\n";
+    cout << "Deck     : " << activeDeck->deckName << "\n";
+    cout << "Cards    : " << filteredCards.size() << "\n";
+    cout << "Order    : " << (orderChoice == '1' ? "Sequential" : "Shuffled") << "\n";
+    string typeLabel;
+    if(typeChoice == '1') typeLabel = "All Types";
+    else if(typeChoice == '2') typeLabel = "Regular Only";
+    else if(typeChoice == '3') typeLabel = "Reversible Only";
+    else typeLabel = "Input Answer Only";
+    cout << "Filter   : " << typeLabel << "\n\n";
+    cout << "[1] Start Studying\n[0] Back\n";
+
+    char confirm = getChoice();
+    if(confirm == '0') return AppState::BACK;
+
+    // --- Run the review session with filtered/configured cards ---
+    reviewIndex = 0;
+    bool isReviewing = true;
+    while(isReviewing && reviewIndex < (int)filteredCards.size()) {
+        std::cout << "\033[2J\033[1;1H\n";
+        cout << "=== CUSTOM STUDY: " << activeDeck->deckName << " === (" << reviewIndex + 1 << "/" << filteredCards.size() << ")\n\n";
+        cout << filteredCards[reviewIndex]->front << "\n\n";
+
+        int cardType = filteredCards[reviewIndex]->type;
+        if(cardType == 0 || cardType == 1) {
+            cout << "[1] Show Answer\n[9] Stop Review\n[0] Sign Out\n";
+            char choice = getChoice();
+            if(choice == '0') {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(choice == '9') {
+                return AppState::BACK;
+            } else if(choice == '1') {
+                cout << "\n" << filteredCards[reviewIndex]->back << "\n";
+            }
+        } else if(cardType == 2) {
+            cout << "Type your answer in square brackets (e.g. [answer])\n";
+            cout << "[9] Stop Review  [0] Sign Out\n";
+            cout << ": "; string input; getline(cin >> ws, input);
+            if(input == "0") {
+                activeUser = nullptr;
+                return AppState::BACK;
+            } else if(input == "9") {
+                return AppState::BACK;
+            } else if((input.front() == '[') && (input.back() == ']')) {
+                if(input == "[" + filteredCards[reviewIndex]->back + "]") {
+                    cout << "\nCorrect!\n";
+                    activeProfile->totalCorrect++;
+                } else {
+                    cout << "\nIncorrect! Answer was: " << filteredCards[reviewIndex]->back << "\n";
+                    activeProfile->totalWrong++;
+                }
+                activeProfile->totalStudied++;
+                saveToFile(allAccounts);
+            }
+        }
+
+        cout << "\nPress Enter to continue...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+        reviewIndex++;
+    }
+
+    std::cout << "\033[2J\033[1;1H\n";
+    cout << "=== SESSION COMPLETE ===\n\n";
+    cout << "You studied " << filteredCards.size() << " card(s) from: " << activeDeck->deckName << "\n";
+    cout << "\nPress Enter to return...";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
+
+    return AppState::BACK;
+}
+
 AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
     string deckNameString;
     for(size_t i = 0; i < deckBreadcrumbs.size(); ++i) {
@@ -1549,7 +1708,7 @@ int main() {
                 currentState = handleCreateDeck(allAccounts, activeUser, activeProfile, activeDeck);
                 break;
             case AppState::DECK_DASHBOARD:
-                currentState = handleDeckDashboard(allAccounts, activeUser, activeProfile, activeDeck);
+                currentState = handleDeckDashboard(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
                 break;
             case AppState::DECK_SETTINGS:
                 currentState = handleDeckSettings(allAccounts, activeUser, activeProfile, activeDeck);
