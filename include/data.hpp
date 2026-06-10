@@ -11,6 +11,8 @@ class Card {
     public:
         string front, back;
         int type = 0; // 0: Regular, 1: Reversible, 2: Input Answer
+        vector<string> tags;  //for tags
+        bool flagged = false;
 
         // FSRS DIFFICULTY! [mj]
         double difficulty = 5.0;
@@ -88,6 +90,8 @@ namespace nlohmann {
                 {"stability", c.stability},
                 {"repetitions", c.repetitions},
                 {"nextReview", c.nextReview}
+                {"tags", c.tags},
+                {"flagged", c.flagged}
             };
         } 
 
@@ -99,6 +103,8 @@ namespace nlohmann {
             c.stability = j.at("stability").get<double>();
             c.repetitions = j.at("repetitions").get<int>();
             c.nextReview = j.at("nextReview").get<int>();
+            c.tags = j.value("tags", vector<string>{});
+            c.flagged = j.value("flagged", false);
         }
     };
 
