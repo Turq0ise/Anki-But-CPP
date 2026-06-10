@@ -8,204 +8,49 @@
                     {
                         "cards": [
                             {
-                                "back": "ANSWER 1",
+                                "back": "A",
                                 "difficulty": 5.0,
-                                "front": "QUESTION 1",
+                                "flagged": true,
+                                "front": "Q",
                                 "nextReview": 0,
                                 "repetitions": 0,
                                 "stability": 1.0,
-                                "type": 0
-                            },
-                            {
-                                "back": "Reversed Answer",
-                                "difficulty": 5.0,
-                                "front": "Reversed Question",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
+                                "tags": [
+                                    "RedTag"
+                                ],
                                 "type": 1
                             },
                             {
-                                "back": "Reversed Question",
+                                "back": "Q",
                                 "difficulty": 5.0,
-                                "front": "Reversed Answer",
+                                "flagged": true,
+                                "front": "A",
                                 "nextReview": 0,
                                 "repetitions": 0,
                                 "stability": 1.0,
+                                "tags": [
+                                    "BlueTag",
+                                    "GreenTag"
+                                ],
                                 "type": 1
-                            },
-                            {
-                                "back": "hooray",
-                                "difficulty": 5.0,
-                                "front": "hephep",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 2
                             }
                         ],
                         "cardsIncSub": [],
                         "deckName": "Default Deck",
                         "level": 0,
-                        "subDecks": [
-                            {
-                                "cards": [
-                                    {
-                                        "back": "Test Answer",
-                                        "difficulty": 5.0,
-                                        "front": "Test Question",
-                                        "nextReview": 0,
-                                        "repetitions": 0,
-                                        "stability": 1.0,
-                                        "type": 2
-                                    }
-                                ],
-                                "cardsIncSub": [],
-                                "deckName": "SubDeck",
-                                "level": 1,
-                                "subDecks": [
-                                    {
-                                        "cards": [],
-                                        "cardsIncSub": [],
-                                        "deckName": "TestTest",
-                                        "level": 2,
-                                        "subDecks": [
-                                            {
-                                                "cards": [],
-                                                "cardsIncSub": [],
-                                                "deckName": "TestTest",
-                                                "level": 3,
-                                                "subDecks": []
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "cards": [],
-                                        "cardsIncSub": [],
-                                        "deckName": "Test",
-                                        "level": 2,
-                                        "subDecks": []
-                                    }
-                                ]
-                            },
-                            {
-                                "cards": [],
-                                "cardsIncSub": [],
-                                "deckName": "SubDeck 2",
-                                "level": 1,
-                                "subDecks": [
-                                    {
-                                        "cards": [],
-                                        "cardsIncSub": [],
-                                        "deckName": "TestTest",
-                                        "level": 2,
-                                        "subDecks": []
-                                    }
-                                ]
-                            },
-                            {
-                                "cards": [],
-                                "cardsIncSub": [],
-                                "deckName": "Weh",
-                                "level": 1,
-                                "subDecks": []
-                            }
-                        ]
-                    },
-                    {
-                        "cards": [
-                            {
-                                "back": "Q",
-                                "difficulty": 5.0,
-                                "front": "A",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 1
-                            },
-                            {
-                                "back": "A",
-                                "difficulty": 5.0,
-                                "front": "Q",
-                                "nextReview": 0,
-                                "repetitions": 0,
-                                "stability": 1.0,
-                                "type": 1
-                            }
-                        ],
-                        "cardsIncSub": [],
-                        "deckName": "Test",
-                        "level": 0,
-                        "subDecks": [
-                            {
-                                "cards": [],
-                                "cardsIncSub": [],
-                                "deckName": "Test Again",
-                                "level": 1,
-                                "subDecks": []
-                            }
-                        ]
-                    },
-                    {
-                        "cards": [],
-                        "cardsIncSub": [],
-                        "deckName": "CPE103L",
-                        "level": 0,
-                        "subDecks": [
-                            {
-                                "cards": [],
-                                "cardsIncSub": [],
-                                "deckName": "Object-Oriented Programming",
-                                "level": 1,
-                                "subDecks": [
-                                    {
-                                        "cards": [],
-                                        "cardsIncSub": [],
-                                        "deckName": "Inheritance",
-                                        "level": 2,
-                                        "subDecks": [
-                                            {
-                                                "cards": [],
-                                                "cardsIncSub": [],
-                                                "deckName": "Test",
-                                                "level": 3,
-                                                "subDecks": []
-                                            },
-                                            {
-                                                "cards": [],
-                                                "cardsIncSub": [],
-                                                "deckName": "TestAgain",
-                                                "level": 3,
-                                                "subDecks": [
-                                                    {
-                                                        "cards": [],
-                                                        "cardsIncSub": [],
-                                                        "deckName": "Inherit",
-                                                        "level": 4,
-                                                        "subDecks": [
-                                                            {
-                                                                "cards": [],
-                                                                "cardsIncSub": [],
-                                                                "deckName": "T",
-                                                                "level": 5,
-                                                                "subDecks": []
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
+                        "subDecks": []
                     }
                 ],
                 "profileName": "Default Profile",
                 "streak": 0,
+                "tags": [
+                    "RedTag",
+                    "BlueTag",
+                    "GreenTag"
+                ],
                 "totalCorrect": 1,
-                "totalStudied": 1,
-                "totalWrong": 0
+                "totalStudied": 2,
+                "totalWrong": 1
             }
         ]
     }
