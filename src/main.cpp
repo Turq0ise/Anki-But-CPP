@@ -1144,7 +1144,7 @@ AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &
 // =========================================================================
 // PRODUCTION CARD MANAGEMENT - TARGETING REAL LIVE STRUCTURE DATA POINTERS
 // =========================================================================
-AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck* activeDeck) {
+AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck* activeDeck, Profile* activeProfile) {
     if (!activeDeck) {
         cout << "Error: No active deck selected! Returning to Dashboard...\n";
         cout << "Press Enter to continue...";
@@ -1167,6 +1167,9 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
         cout << "[6] Toggle Flag\n";
         cout << "[7] Search by Tag\n";
         cout << "[8] Show Flagged Cards\n";
+        cout << "[9] Find Duplicate Cards\n";
+        cout << "[10] Find Duplicate Decks\n";
+        cout << "[11] Find and Replace in Cards\n";
         cout << "[0] Exit back to Dashboard\n";
         cout << "Choice: ";
         
@@ -1351,6 +1354,88 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
                 }
             }
             cin.ignore();
+            cin.get();
+        }
+        else if(choice == 9) {
+            cout << "\n=== DUPLICATE CARDS ===\n";
+
+            bool found = false;
+
+            for(int i = 0; i < activeDeck->cards.size(); i++) {
+                for(int j = i + 1; j < activeDeck->cards.size(); j++) {
+                    if(activeDeck->cards[i].front == activeDeck->cards[j].front && activeDeck->cards[i].back  == activeDeck->cards[j].back) {
+                        cout << "\nDuplicate Found!\n";
+                        cout << "Card " << i + 1 << ": "
+                            << activeDeck->cards[i].front
+                            << " | "
+                            << activeDeck->cards[i].back << endl;
+
+                        cout << "Card " << j + 1 << ": "
+                            << activeDeck->cards[j].front
+                            << " | "
+                            << activeDeck->cards[j].back << endl;
+
+                        found = true;
+                    }
+                }
+            }
+
+            if(found == false) {
+            cout << "No duplicate cards found.\n";
+            }
+
+            cin.get();
+        }
+        else if(choice == 10) {
+            cout << "\n=== DUPLICATE DECKS ===\n";
+
+            bool found = false;
+
+            for(int i = 0; i < activeProfile->decks.size(); i++) {
+                for(int j = i + 1; j < activeProfile->decks.size(); j++) {
+                    if(activeProfile->decks[i].deckName == activeProfile->decks[j].deckName) {
+                        cout << "\nDuplicate Found!\n";
+                        cout << "Deck " << i + 1 << ": " << activeProfile->decks[i].deckName << endl;
+                        cout << "Deck " << j + 1 << ": " << activeProfile->decks[j].deckName << endl;
+
+                        found = true;
+                    }
+                }
+            }
+
+            if(found == false)
+            {
+                cout << "No duplicate decks found.\n";
+            }
+
+            cin.get();
+        }
+        else if(choice == 11) {
+            string findWord;
+            string replaceWord;
+
+            cout << "Find: ";
+            getline(cin >> ws, findWord);
+
+            cout << "Replace with: ";
+            getline(cin, replaceWord);
+
+            int count = 0;
+
+            for(int i = 0; i < activeDeck->cards.size(); i++) {
+                if(activeDeck->cards[i].front == findWord) {
+                    activeDeck->cards[i].front = replaceWord;
+                    count++;
+                }
+
+                if(activeDeck->cards[i].back == findWord) {
+                    activeDeck->cards[i].back = replaceWord;
+                    count++;
+                }
+            }
+
+            cout << "\n" << count << " replacement(s) made.\n";
+            saveToFile(allAccounts);
             cin.get();
         }
     }
@@ -1564,7 +1649,7 @@ int main() {
                 currentState = handleShowSubDecks(allAccounts, activeUser, activeProfile, deckPage, activeDeck);
                 break;
             case AppState::CARD_MANAGEMENT:
-                currentState = handleCardManagement(allAccounts, activeDeck);
+                currentState = handleCardManagement(allAccounts, activeDeck, activeProfile);
                 break;
             case AppState::REVIEW_CARDS:
                 currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
