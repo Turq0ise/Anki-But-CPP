@@ -36,7 +36,7 @@ void createBackup() {
     // Open the original file to read
     ifstream sourceFile("data.json");
     if (!sourceFile.is_open()) {
-        cout << "[ERROR] Could not find 'data.json' to backup. Have you saved any data yet?\n";
+        cout << "[ERROR] Could not find 'data.json' to backup. Have you     d any data yet?\n";
         return;
     }
 
@@ -259,6 +259,9 @@ enum class AppState {
 
 vector<AppState> breadcrumbs;
 vector<Deck*> deckBreadcrumbs;
+vector<Deck*> deckBreadcrumbsHierarchy;
+vector<Deck*> deckBreadcrumbsNavigation;
+// Deck* previousDeck;
 
 /*
     AppState Handle Functions:
@@ -322,15 +325,54 @@ AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &
         return AppState::MAIN_MENU;
     }
 
-    if(breadcrumbs.rbegin()[0] == AppState::DECK_DASHBOARD || breadcrumbs.rbegin()[0] == AppState::SHOW_SUBDECKS) {
-        if(breadcrumbs.rbegin()[1] == AppState::CREATE_DECK) {
-            deckBreadcrumbs.clear();
+    if(breadcrumbs.rbegin()[0] == AppState::DECK_DASHBOARD) {
+        deckBreadcrumbsNavigation.pop_back();
+        if(deckBreadcrumbsNavigation.size() == 0) {
+            deckBreadcrumbsHierarchy.clear();
             activeDeck = nullptr;
         } else {
-            deckBreadcrumbs.pop_back();
-            activeDeck = deckBreadcrumbs.rbegin()[0];
+            activeDeck = deckBreadcrumbsNavigation.back();
+            while(deckBreadcrumbsNavigation.back() != deckBreadcrumbsHierarchy.back()) {
+                deckBreadcrumbsHierarchy.pop_back();
+            }
         }
-        
+        // previousDeck = nullptr;
+    }
+
+    if(breadcrumbs.rbegin()[0] == AppState::DELETE_DECK) {
+        deckBreadcrumbsNavigation.pop_back();
+        if(deckBreadcrumbsNavigation.size() == 0) {
+            while(breadcrumbs.rbegin()[1] != AppState::PROFILE_DASHBOARD) {
+                breadcrumbs.pop_back();
+            }
+            activeDeck = nullptr;
+        } else {
+            while(breadcrumbs.rbegin()[0] != AppState::DECK_DASHBOARD) {
+                breadcrumbs.pop_back();
+            }
+            
+            activeDeck = deckBreadcrumbsNavigation.back();
+            while(deckBreadcrumbsNavigation.back() != deckBreadcrumbsHierarchy.back()) {
+                deckBreadcrumbsHierarchy.pop_back();
+            }
+        }
+
+        // if(previousDeck == nullptr) {
+        //     while(breadcrumbs.rbegin()[1] != AppState::PROFILE_DASHBOARD) {
+        //         breadcrumbs.pop_back();
+        //     }
+        //     activeDeck = previousDeck;
+        // } else if(previousDeck != nullptr) {
+        //     int count = 0;
+        //     while(count != 2) {
+        //         breadcrumbs.pop_back();
+        //         if(breadcrumbs.rbegin()[1] == AppState::DECK_DASHBOARD) count++;
+        //     }
+        //     while(deckBreadcrumbsHierarchy.rbegin()[0] != previousDeck) {
+        //         deckBreadcrumbsHierarchy.pop_back();
+        //     }
+        //     activeDeck = previousDeck;
+        // }
     }
 
     if(breadcrumbs.rbegin()[1] == breadcrumbs.rbegin()[0]) breadcrumbs.pop_back();
@@ -346,7 +388,8 @@ AppState handleBack(vector<AppState> &breadcrumbs, Account* &activeUser, Deck* &
             breadcrumbs.back() == AppState::CREATE_PROFILE ||
             breadcrumbs.back() == AppState::CHANGE_PROFILE_NAME ||
             breadcrumbs.back() == AppState::DELETE_PROFILE ||
-            breadcrumbs.back() == AppState::CREATE_DECK) {
+            breadcrumbs.back() == AppState::CREATE_DECK ||
+            breadcrumbs.back() == AppState::DELETE_DECK) {
                 breadcrumbs.pop_back();
                 invalid = true;
             } else invalid = false;
@@ -578,6 +621,7 @@ AppState handleProfileDashboard(unordered_map<string,Account> &allAccounts, Acco
         return AppState::PROFILE_DASHBOARD;
     }
     int choiceToInt = choice - '0';
+    // previousDeck = activeDeck;
     activeDeck = &activeProfile->decks[(choiceToInt - 1) + (deckPage * limitPerPage)];
     return AppState::DECK_DASHBOARD;
 }
@@ -833,9 +877,9 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
 
     cout << "Insert Deck Stats Here\n\n";
 
-    cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n[5] Custom Study\n";
+    cout << "[1] Review\n[2] Card Management\n[3] Add Deck\n";
     if(activeDeck->subDecks.size() > 0) cout << "[4] Show Subdecks\n";
-    cout << "[8] Settings\n[9] Back\n[0] Sign Out\n";
+    cout << "[5] Custom Study\n[8] Settings\n[9] Back\n[0] Sign Out\n";
 
     char choice = getChoice();
     if(choice == '0') {
@@ -853,7 +897,7 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
     } else if(choice == '3') {
         return AppState::CREATE_DECK;
     } else if(choice == '5') {
-    return AppState::CUSTOM_STUDY;
+        return AppState::CUSTOM_STUDY;
     } else if((choice == '4') && (activeDeck->subDecks.size() > 0)) {
         return AppState::SHOW_SUBDECKS;
     }
@@ -913,6 +957,7 @@ AppState handleShowSubDecks(unordered_map<string,Account> &allAccounts, Account*
         return AppState::SHOW_SUBDECKS;
     }
     int choiceToInt = choice - '0';
+    // previousDeck = activeDeck;
     activeDeck = &activeDeck->subDecks[(choiceToInt - 1) + (deckPage * limitPerPage)];
     return AppState::DECK_DASHBOARD;
 }
@@ -924,7 +969,7 @@ AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &
     cout << "               CREATE DECK\n";
     cout << "===========================================\n";
 
-    vector<Deck*> addToDeckBreadcrumbs;
+    vector<Deck*> addToDeckBreadcrumbsHierarchy;
     Deck* selectedDeck;
     vector<Deck>* currentDeckVector = nullptr;
     int startingLevel = 0;
@@ -981,7 +1026,7 @@ AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &
         }
 
         selectedDeck = &((*currentDeckVector)[foundIndex]);
-        addToDeckBreadcrumbs.push_back(selectedDeck);
+        addToDeckBreadcrumbsHierarchy.push_back(selectedDeck);
         
         currentDeckVector = &((*currentDeckVector)[foundIndex].subDecks);
     }
@@ -1003,7 +1048,9 @@ AppState handleCreateDeck(unordered_map<string,Account> &allAccounts, Account* &
     } else if(choice == '2') {
         return AppState::CREATE_DECK;
     } else if(choice == '1') {
-        for(size_t i = 0; i < addToDeckBreadcrumbs.size() - 1; ++i) deckBreadcrumbs.push_back(addToDeckBreadcrumbs[i]);
+        for(size_t i = 0; i < addToDeckBreadcrumbsHierarchy.size() - 1; ++i) deckBreadcrumbsHierarchy.push_back(addToDeckBreadcrumbsHierarchy[i]);
+        // deckBreadcrumbsNavigation.push_back(selectedDeck);
+        // previousDeck = activeDeck;
         activeDeck = selectedDeck;
         return AppState::DECK_DASHBOARD;
     }
@@ -1042,7 +1089,7 @@ AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Accoun
     int level = activeDeck->level;
     vector<int> runningIndex;
     for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
-        if(activeProfile->decks[i].deckName == deckBreadcrumbs[0]->deckName) {
+        if(activeProfile->decks[i].deckName == deckBreadcrumbsHierarchy[0]->deckName) {
             runningIndex.push_back(i);
             break;
         }
@@ -1053,17 +1100,14 @@ AppState handleChangeDeckName(unordered_map<string,Account> &allAccounts, Accoun
     if(level == 0) {
         runningVectorDeck = activeProfile->decks;
     } else if(level >= 1) {
-        bool early = false;
-        for(size_t i = 1; i < deckBreadcrumbs.size() - 1; i++) {
+        for(size_t i = 1; i < deckBreadcrumbsHierarchy.size() - 1; i++) {
             for(size_t j = 0; runningDeck->subDecks.size(); j++) {
-                if(deckBreadcrumbs[i]->deckName == runningDeck->subDecks[j].deckName) {
+                if(deckBreadcrumbsHierarchy[i]->deckName == runningDeck->subDecks[j].deckName) {
                     runningIndex.push_back(static_cast<int>(j));
                     runningDeck = &runningDeck->subDecks[runningIndex[i]];
-                    early = true;
                     break;
                 }
             }
-            if(early) break;
         }
 
         runningVectorDeck = runningDeck->subDecks;
@@ -1103,7 +1147,7 @@ AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &
     int level = activeDeck->level;
     vector<int> runningIndex;
     for(size_t i = 0; i < activeProfile->decks.size(); ++i) {
-        if(activeProfile->decks[i].deckName == deckBreadcrumbs[0]->deckName) {
+        if(activeProfile->decks[i].deckName == deckBreadcrumbsHierarchy[0]->deckName) {
             runningIndex.push_back(i);
             break;
         }
@@ -1132,17 +1176,14 @@ AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &
             if(level == 0) {
                 activeProfile->decks.erase(activeProfile->decks.begin() + runningIndex[0]);
             } else if(level >= 1) {
-                bool early = false;
-                for(size_t i = 1; i < deckBreadcrumbs.size() - 1; i++) {
-                    for(size_t j = 0; runningDeck->subDecks.size(); j++) {
-                        if(deckBreadcrumbs[i]->deckName == runningDeck->subDecks[j].deckName) {
+                for(size_t i = 1; i < deckBreadcrumbsHierarchy.size() - 1; ++i) {
+                    for(size_t j = 0; runningDeck->subDecks.size(); ++j) {
+                        if(deckBreadcrumbsHierarchy[i]->deckName == runningDeck->subDecks[j].deckName) {
                             runningIndex.push_back(static_cast<int>(j));
                             runningDeck = &runningDeck->subDecks[runningIndex[i]];
-                            early = true;
                             break;
                         }
                     }
-                    if(early) break;
                 }
 
                 for(size_t i = 0; i < runningDeck->subDecks.size(); ++i) {
@@ -1170,7 +1211,7 @@ AppState handleDeleteDeck(unordered_map<string,Account> &allAccounts, Account* &
 // =========================================================================
 // PRODUCTION CARD MANAGEMENT - TARGETING REAL LIVE STRUCTURE DATA POINTERS
 // =========================================================================
-AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck* activeDeck) {
+AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Profile* &activeProfile,  Deck* &activeDeck) {
     if (!activeDeck) {
         cout << "Error: No active deck selected! Returning to Dashboard...\n";
         cout << "Press Enter to continue...";
@@ -1193,6 +1234,9 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
         cout << "[6] Toggle Flag\n";
         cout << "[7] Search by Tag\n";
         cout << "[8] Show Flagged Cards\n";
+        cout << "[9] Find Duplicate Cards\n";
+        cout << "[10] Find Duplicate Decks\n";
+        cout << "[11] Find and Replace in Cards\n";
         cout << "[0] Exit back to Deck Dashboard\n";
         cout << "Choice: ";
         
@@ -1351,6 +1395,88 @@ AppState handleCardManagement(unordered_map<string, Account> &allAccounts, Deck*
             cin.ignore();
             cin.get();
         }
+        else if(choice == 9) {
+            cout << "\n=== DUPLICATE CARDS ===\n";
+
+            bool found = false;
+
+            for(int i = 0; i < activeDeck->cards.size(); i++) {
+                for(int j = i + 1; j < activeDeck->cards.size(); j++) {
+                    if(activeDeck->cards[i].front == activeDeck->cards[j].front && activeDeck->cards[i].back  == activeDeck->cards[j].back) {
+                        cout << "\nDuplicate Found!\n";
+                        cout << "Card " << i + 1 << ": "
+                            << activeDeck->cards[i].front
+                            << " | "
+                            << activeDeck->cards[i].back << endl;
+
+                        cout << "Card " << j + 1 << ": "
+                            << activeDeck->cards[j].front
+                            << " | "
+                            << activeDeck->cards[j].back << endl;
+
+                        found = true;
+                    }
+                }
+            }
+
+            if(found == false) {
+            cout << "No duplicate cards found.\n";
+            }
+
+            cin.get();
+        }
+        else if(choice == 10) {
+            cout << "\n=== DUPLICATE DECKS ===\n";
+
+            bool found = false;
+
+            for(int i = 0; i < activeProfile->decks.size(); i++) {
+                for(int j = i + 1; j < activeProfile->decks.size(); j++) {
+                    if(activeProfile->decks[i].deckName == activeProfile->decks[j].deckName) {
+                        cout << "\nDuplicate Found!\n";
+                        cout << "Deck " << i + 1 << ": " << activeProfile->decks[i].deckName << endl;
+                        cout << "Deck " << j + 1 << ": " << activeProfile->decks[j].deckName << endl;
+
+                        found = true;
+                    }
+                }
+            }
+
+            if(found == false)
+            {
+                cout << "No duplicate decks found.\n";
+            }
+
+            cin.get();
+        }
+        else if(choice == 11) {
+            string findWord;
+            string replaceWord;
+
+            cout << "Find: ";
+            getline(cin >> ws, findWord);
+
+            cout << "Replace with: ";
+            getline(cin, replaceWord);
+
+            int count = 0;
+
+            for(int i = 0; i < activeDeck->cards.size(); i++) {
+                if(activeDeck->cards[i].front == findWord) {
+                    activeDeck->cards[i].front = replaceWord;
+                    count++;
+                }
+
+                if(activeDeck->cards[i].back == findWord) {
+                    activeDeck->cards[i].back = replaceWord;
+                    count++;
+                }
+            }
+
+            cout << "\n" << count << " replacement(s) made.\n";
+            saveToFile(allAccounts);
+            cin.get();
+        }
     }
     return AppState::BACK; 
 }
@@ -1502,6 +1628,11 @@ AppState handleCustomStudy(unordered_map<string,Account> &allAccounts, Account* 
     cout << "=== SESSION COMPLETE ===\n\n";
     cout << "You studied " << filteredCards.size() << " card(s) from: " << activeDeck->deckName << "\n";
     cout << "\nPress Enter to return...";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
+    return AppState::BACK;
+}
+
 AppState handleTags(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &tagsPage, string &activeTag) {
     std::cout << "\033[2J\033[1;1H\n"; 
     cout << "===========================================\n";
@@ -1706,7 +1837,6 @@ AppState handleCreateTag(unordered_map<string,Account> &allAccounts, Account* &a
     return AppState::BACK;
 }
 
-AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex) {
 AppState handleAssignTag(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int tagsPage, Card* &activeCard) {
     std::cout << "\033[2J\033[1;1H\n"; 
     cout << "===========================================\n";
@@ -1768,11 +1898,11 @@ AppState handleAssignTag(unordered_map<string,Account> &allAccounts, Account* &a
 
 AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* &activeUser, Profile* &activeProfile, Deck* &activeDeck, int &reviewIndex, Card* &activeCard) {
     string deckNameString;
-    for(size_t i = 0; i < deckBreadcrumbs.size(); ++i) {
+    for(size_t i = 0; i < deckBreadcrumbsHierarchy.size(); ++i) {
         if(i == 0) {
-            deckNameString = deckBreadcrumbs[i]->deckName;
+            deckNameString = deckBreadcrumbsHierarchy[i]->deckName;
         } else {
-            deckNameString = deckNameString + "::" + deckBreadcrumbs[i]->deckName;
+            deckNameString = deckNameString + "::" + deckBreadcrumbsHierarchy[i]->deckName;
         }
     }
 
@@ -1918,8 +2048,9 @@ int main() {
         } 
             
         if(activeDeck != nullptr) {
-            if(((deckBreadcrumbs.size() != 0) && (deckBreadcrumbs.back() != activeDeck)) || (deckBreadcrumbs.size() == 0)) {
-                deckBreadcrumbs.push_back(activeDeck);
+            if(((deckBreadcrumbsHierarchy.size() != 0) && (deckBreadcrumbsHierarchy.back() != activeDeck)) || (deckBreadcrumbsHierarchy.size() == 0)) {
+                deckBreadcrumbsHierarchy.push_back(activeDeck);
+                deckBreadcrumbsNavigation.push_back(activeDeck);
             }
         }
 
@@ -1976,7 +2107,7 @@ int main() {
                 currentState = handleCreateDeck(allAccounts, activeUser, activeProfile, activeDeck);
                 break;
             case AppState::DECK_DASHBOARD:
-                currentState = handleDeckDashboard(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex);
+                currentState = handleDeckDashboard(allAccounts, activeUser, activeProfile, activeDeck);
                 break;
             case AppState::DECK_SETTINGS:
                 currentState = handleDeckSettings(allAccounts, activeUser, activeProfile, activeDeck);
@@ -1991,7 +2122,7 @@ int main() {
                 currentState = handleShowSubDecks(allAccounts, activeUser, activeProfile, deckPage, activeDeck);
                 break;
             case AppState::CARD_MANAGEMENT:
-                currentState = handleCardManagement(allAccounts, activeDeck);
+                currentState = handleCardManagement(allAccounts, activeProfile, activeDeck);
                 break;
             case AppState::REVIEW_CARDS:
                 currentState = handleReviewCards(allAccounts, activeUser, activeProfile, activeDeck, reviewIndex, activeCard);
