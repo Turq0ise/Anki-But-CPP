@@ -1832,10 +1832,14 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
                 return AppState::REVIEW_CARDS;
             } else if((input.front() == '[') && (input.back() == ']')) {
                 if(input == "[" + cards[reviewIndex]->back + "]") {
-                    cout << "\ntomoh\n";
+                    cout << "\nCorrect!\n";
+                    activeProfile->totalCorrect++;
                 } else {
-                    cout << "\nntnt\n";
+                    cout << "\nIncorrect! Answer was: " << cards[reviewIndex]->back << "\n";
+                    activeProfile->totalWrong++;
                 }
+                activeProfile->totalStudied++;
+                saveToFile(allAccounts);
             }
         }
 
