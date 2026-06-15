@@ -414,16 +414,26 @@ AppState handleLogin(unordered_map<string, Account> &allAccounts, Account* &acti
     cout << "Enter Password: ";
     getline(cin, password);
     if(allAccounts.find(username) == allAccounts.end()) {
-        cout << "Account does not exist or Password is Incorrect, Please try again\n";
-        cout << "Press Enter to try again...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        return AppState::LOGIN;
+        cout << "Account does not exist or Password is Incorrect\n";
+        cout << "[0] To go back\n Any key to try again";
+        string choice;
+        cin >> choice;
+        if(choice == "0") {
+            return AppState::BACK;
+        } else {
+            return AppState::LOGIN;
+        }
     }
     if(allAccounts[username].password != password) {
-        cout << "Account does not exist or Password is Incorrect, Please try again\n";
-        cout << "Press Enter to try again...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        return AppState::LOGIN;
+        cout << "Account does not exist or Password is Incorrect\n";
+        cout << "[0] To go back\n Any key to try again";
+        string choice;
+        cin >> choice;
+        if(choice == "0") {
+            return AppState::BACK;
+        } else {
+            return AppState::LOGIN;
+        }
     }
 
     activeUser = &allAccounts[username];
@@ -1584,7 +1594,7 @@ AppState handleCustomStudy(unordered_map<string,Account> &allAccounts, Account* 
         cout << "=== CUSTOM STUDY: " << activeDeck->deckName << " === (" << reviewIndex + 1 << "/" << filteredCards.size() << ")\n\n";
         cout << filteredCards[reviewIndex]->front << "\n\n";
 
-        int cardType = filteredCards[reviewIndex]->type;
+            int cardType = filteredCards[reviewIndex]->type;
         if(cardType == 0 || cardType == 1) {
             cout << "[1] Show Answer\n[9] Stop Review\n[0] Sign Out\n";
             char choice = getChoice();
@@ -1908,8 +1918,8 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
 
     vector<Card*> cards = getCardsFromDeck(*activeDeck);
 
-    bool isReviewing = true;
-    while(isReviewing && (reviewIndex < cards.size())) {
+    // bool isReviewing = true;
+    while(reviewIndex < cards.size()) {
         if(reviewIndex != 0) cout << "\n...........................................";
 
         std::cout << "\033[2J\033[1;1H\n";
@@ -1918,8 +1928,9 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         activeCard = cards[reviewIndex];
 
         int cardType = cards[reviewIndex]->type;
+        char grade;
         if(cardType == 0 || cardType == 1) {
-            cout << "[1] Show Answer\n[6] Assign Tag\n[7] Toggle Flag\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+            cout << "[1] Show Answer\n[6] Assign Tag\n[7] Toggle Flag\n[8] Edit Card\n[9] Back/Stop Review\n[0] Sign Out\n";
 
             char choice = getChoice();
             if(choice == '0') {
@@ -1941,14 +1952,20 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
             } else {
                 return AppState::REVIEW_CARDS;
             }
+
+            cout << "Did you get this card correct? [Y/n]: ";
+            cin >> grade;
         } else if(cardType == 2) {
             cout << "To answer the flashcard, type your answer enclosed in square brackets\n\n";
-            cout << "[6] Assign Tag\n[7] Flag Card\n[8] Edit Card (To follow mamaya para makaproceed yung iba)\n[9] Back/Stop Review\n[0] Sign Out\n";
+            cout << "[5] Reset Review\n[6] Assign Tag\n[7] Flag Card\n[8] Edit Card\n[9] Back/Stop Review\n[0] Sign Out\n";
 
             cout << ": "; string input; getline(cin >> ws, input);
             if(input == "0") {
                 activeUser = nullptr;
                 return AppState::BACK;
+            } else if(input == "5") {
+                reviewIndex = 0;
+                return AppState::REVIEW_CARDS;
             } else if(input == "6") {
                 return AppState::ASSIGN_TAG;
             } else if(input == "7") {
@@ -1962,9 +1979,11 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
                 return AppState::REVIEW_CARDS;
             } else if((input.front() == '[') && (input.back() == ']')) {
                 if(input == "[" + cards[reviewIndex]->back + "]") {
-                    cout << "\ntomoh\n";
+                    cout << "\nCorrect, Great Work!\n";
+                    grade = 'Y';
                 } else {
-                    cout << "\nntnt\n";
+                    cout << "\nIncorrect, Better Luck Next Time!\n";
+                    grade = 'n';
                 }
             }
         }
@@ -1976,16 +1995,14 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         cin.get();
         
         */
-        cout << "Did you get this card correct? [Y/n]: ";
-        char grade;
-        cin >> grade;
 
         // Update Stat
+
         activeProfile->totalStudied++;
         if (grade == 'Y' || grade == 'y') {
             activeProfile->totalCorrect++;
         } else {
-                activeProfile->totalWrong++;
+            activeProfile->totalWrong++;
         }
 
         // Save to data.json
@@ -1997,18 +2014,23 @@ AppState handleReviewCards(unordered_map<string,Account> &allAccounts, Account* 
         cin.get();
 
         reviewIndex++;
-    }
 
-    
+    }
+    cout << "\n";
+
+    activeCard = nullptr;
+
+    cout << "All Cards have been reviewed\n";
     for(size_t i = 0; i < cards.size(); ++i) {
         cout << cards[i]->front << "\n";
     }
+    cout << "\n[1] Reset Review\n[0] Back\n";
+    char choice = getChoice();
 
-    activeCard = nullptr;
-    cout << "Press Enter to return...";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cin.get();
-
+    if(choice == '1') {
+        reviewIndex = 0;
+        return AppState::REVIEW_CARDS;
+    }
     return AppState::BACK;
 }
 
@@ -2050,6 +2072,8 @@ int main() {
         if(activeDeck != nullptr) {
             if(((deckBreadcrumbsHierarchy.size() != 0) && (deckBreadcrumbsHierarchy.back() != activeDeck)) || (deckBreadcrumbsHierarchy.size() == 0)) {
                 deckBreadcrumbsHierarchy.push_back(activeDeck);
+            }
+            if(((deckBreadcrumbsNavigation.size() != 0) && (deckBreadcrumbsNavigation.back() != activeDeck)) || (deckBreadcrumbsNavigation.size() == 0)) {
                 deckBreadcrumbsNavigation.push_back(activeDeck);
             }
         }
