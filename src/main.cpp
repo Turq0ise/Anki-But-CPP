@@ -847,6 +847,7 @@ AppState handleDeckDashboard(unordered_map<string,Account> &allAccounts, Account
     } else if(choice == '8') {
         return AppState::SETTINGS;
     } else if(choice == '1') {
+        reviewIndex = 0;
         return AppState::REVIEW_CARDS;
     } else if(choice == '2') {
         return AppState::CARD_MANAGEMENT;
